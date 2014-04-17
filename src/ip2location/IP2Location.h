@@ -60,7 +60,7 @@ extern "C" {
 #define  DOMAIN                 0x00080
 #define  ZIPCODE                0x00100
 #define  TIMEZONE               0x00200
-#define  NETSPEED               0x00400 
+#define  NETSPEED               0x00400
 #define  IDDCODE                0x00800
 #define  AREACODE               0x01000
 #define  WEATHERSTATIONCODE     0x02000
@@ -80,12 +80,13 @@ extern "C" {
 
 #define INVALID_IPV6_ADDRESS "INVALID IPV6 ADDRESS"
 #define INVALID_IPV4_ADDRESS "INVALID IPV4 ADDRESS"
-#define  NOT_SUPPORTED "This parameter is unavailable for selected data file. Please upgrade the data file."
+// #define  NOT_SUPPORTED "This parameter is unavailable for selected data file. Please upgrade the data file."
 
 
-typedef struct
-{
+typedef struct {
 	FILE *filehandle;
+	uint8_t *cache;
+	enum IP2Location_mem_type access_type;
 	uint8_t databasetype;
 	uint8_t databasecolumn;
 	uint8_t databaseday;
@@ -96,8 +97,7 @@ typedef struct
 	uint32_t ipversion;
 } IP2Location;
 
-typedef struct 
-{
+typedef struct {
 	char *country_short;
 	char *country_long;
 	char *region;
@@ -131,28 +131,9 @@ typedef struct StringList{
 IP2Location *IP2Location_open(char *db);
 int IP2Location_open_mem(IP2Location *loc, enum IP2Location_mem_type);
 uint32_t IP2Location_close(IP2Location *loc);
-IP2LocationRecord *IP2Location_get_country_short(IP2Location *loc, char *ip);
-IP2LocationRecord *IP2Location_get_country_long(IP2Location *loc, char *ip);
-IP2LocationRecord *IP2Location_get_region(IP2Location *loc, char *ip);
-IP2LocationRecord *IP2Location_get_city (IP2Location *loc, char *ip);
-IP2LocationRecord *IP2Location_get_isp(IP2Location *loc, char *ip);
-IP2LocationRecord *IP2Location_get_latitude(IP2Location *loc, char *ip);
-IP2LocationRecord *IP2Location_get_longitude(IP2Location *loc, char *ip);
-IP2LocationRecord *IP2Location_get_domain(IP2Location *loc, char *ip);
-IP2LocationRecord *IP2Location_get_zipcode(IP2Location *loc, char *ip);
-IP2LocationRecord *IP2Location_get_timezone(IP2Location *loc, char *ip);
-IP2LocationRecord *IP2Location_get_netspeed(IP2Location *loc, char *ip);
-IP2LocationRecord *IP2Location_get_iddcode(IP2Location *loc, char *ip);
-IP2LocationRecord *IP2Location_get_areacode(IP2Location *loc, char *ip);
-IP2LocationRecord *IP2Location_get_weatherstationcode(IP2Location *loc, char *ip);
-IP2LocationRecord *IP2Location_get_weatherstationname(IP2Location *loc, char *ip);
-IP2LocationRecord *IP2Location_get_mcc(IP2Location *loc, char *ip);
-IP2LocationRecord *IP2Location_get_mnc(IP2Location *loc, char *ip);
-IP2LocationRecord *IP2Location_get_mobilebrand(IP2Location *loc, char *ip);
-IP2LocationRecord *IP2Location_get_elevation(IP2Location *loc, char *ip);
-IP2LocationRecord *IP2Location_get_usagetype(IP2Location *loc, char *ip);
-IP2LocationRecord *IP2Location_get_all(IP2Location *loc, char *ip);
+IP2LocationRecord *IP2Location_get_mode(IP2Location *loc, char *ip, uint32_t mode);
 void IP2Location_free_record(IP2LocationRecord *record);
+void IP2Location_delete_shm();
 
 /*###################
 # Private Functions

@@ -19,9 +19,32 @@ class Location: public node::ObjectWrap {
     static void Init(Handle<Object> exports) {
       Local<FunctionTemplate> tpl = FunctionTemplate::New(New);
       tpl->SetClassName(String::NewSymbol("Location"));
-      tpl->InstanceTemplate()->SetInternalFieldCount(1);
-      tpl->InstanceTemplate()->SetAccessor(String::New("mode"), GetDbMode);
-      tpl->InstanceTemplate()->SetAccessor(String::New("opened"), GetIsOpen);
+      Local<ObjectTemplate> i_t = tpl->InstanceTemplate();
+      i_t->SetInternalFieldCount(1);
+      i_t->SetAccessor(String::NewSymbol("mode"), GetDbMode);
+      i_t->SetAccessor(String::NewSymbol("opened"), GetIsOpen);
+
+      tpl->Set(String::NewSymbol("COUNTRYSHORT"), Int32::New(COUNTRYSHORT), ReadOnly);
+      tpl->Set(String::NewSymbol("COUNTRYLONG"), Int32::New(COUNTRYLONG), ReadOnly);
+      tpl->Set(String::NewSymbol("REGION"), Int32::New(REGION), ReadOnly);
+      tpl->Set(String::NewSymbol("CITY"), Int32::New(CITY), ReadOnly);
+      tpl->Set(String::NewSymbol("ISP"), Int32::New(ISP), ReadOnly);
+      tpl->Set(String::NewSymbol("LATITUDE"), Int32::New(LATITUDE), ReadOnly);
+      tpl->Set(String::NewSymbol("LONGITUDE"), Int32::New(LONGITUDE), ReadOnly);
+      tpl->Set(String::NewSymbol("DOMAIN"), Int32::New(DOMAIN), ReadOnly);
+      tpl->Set(String::NewSymbol("ZIPCODE"), Int32::New(ZIPCODE), ReadOnly);
+      tpl->Set(String::NewSymbol("TIMEZONE"), Int32::New(TIMEZONE), ReadOnly);
+      tpl->Set(String::NewSymbol("NETSPEED"), Int32::New(NETSPEED), ReadOnly);
+      tpl->Set(String::NewSymbol("IDDCODE"), Int32::New(IDDCODE), ReadOnly);
+      tpl->Set(String::NewSymbol("AREACODE"), Int32::New(AREACODE), ReadOnly);
+      tpl->Set(String::NewSymbol("WEATHERSTATIONCODE"), Int32::New(WEATHERSTATIONCODE), ReadOnly);
+      tpl->Set(String::NewSymbol("WEATHERSTATIONNAME"), Int32::New(WEATHERSTATIONNAME), ReadOnly);
+      tpl->Set(String::NewSymbol("MCC"), Int32::New(MCC), ReadOnly);
+      tpl->Set(String::NewSymbol("MNC"), Int32::New(MNC), ReadOnly);
+      tpl->Set(String::NewSymbol("MOBILEBRAND"), Int32::New(MOBILEBRAND), ReadOnly);
+      tpl->Set(String::NewSymbol("ELEVATION"), Int32::New(ELEVATION), ReadOnly);
+      tpl->Set(String::NewSymbol("USAGETYPE"), Int32::New(USAGETYPE), ReadOnly);
+      tpl->Set(String::NewSymbol("ALL"), Int32::New(ALL), ReadOnly);
 
       NODE_SET_PROTOTYPE_METHOD(tpl, "getRecord", GetRecord);
       NODE_SET_PROTOTYPE_METHOD(tpl, "close", CloseDatabase);
@@ -107,45 +130,82 @@ class Location: public node::ObjectWrap {
       return scope.Close(Undefined());
     }
 
-    static Handle<Value> GetRecord(const Arguments& args)
-    {
+    static Handle<Value> GetRecord(const Arguments& args) {
       HandleScope scope;
-      String::Utf8Value query(args[0]->ToString());
+      uint32_t mode(ALL);
+      String::Utf8Value ip(args[0]->ToString());
+      if (args.Length() > 1) {
+        mode = args[1]->Uint32Value();
+      }
       Location *location = ObjectWrap::Unwrap<Location>(args.This());
       if (!location->iplocdb) {
         ThrowException(Exception::Error(String::New("connection already closed")));
         return scope.Close(Undefined());
       }
-      IP2LocationRecord *record = IP2Location_get_record(location->iplocdb, *query,
-        COUNTRYSHORT | REGION | CITY | LATITUDE | LONGITUDE);
+      IP2LocationRecord *record = IP2Location_get_mode(location->iplocdb, *ip, mode);
       Local<Object> result = Object::New();
-      result->Set(
-            String::NewSymbol("latitude"),
-            Number::New(record->latitude)
-          );
-      result->Set(
-            String::NewSymbol("longitude"),
-            Number::New(record->longitude)
-          );
-      if(record->country_short != NULL){
-        result->Set(
-              String::NewSymbol("country_short"),
-              String::New(record->country_short)
-            );
+      if (record != NULL) {
+        if (record->country_short != NULL) {
+          result->Set(String::NewSymbol("country_short"), String::New(record->country_short));
+        }
+        if (record->country_long != NULL) {
+          result->Set(String::NewSymbol("country_long"), String::New(record->country_long));
+        }
+        if (record->region != NULL) {
+          result->Set(String::NewSymbol("region"), String::New(record->region));
+        }
+        if (record->city != NULL) {
+          result->Set(String::NewSymbol("city"), String::New(record->city));
+        }
+        if (record->isp != NULL) {
+          result->Set(String::NewSymbol("isp"), String::New(record->isp));
+        }
+        if (mode & LATITUDE) {
+          result->Set(String::NewSymbol("latitude"), Number::New(record->latitude));
+        }
+        if (mode & LONGITUDE) {
+          result->Set(String::NewSymbol("longitude"), Number::New(record->longitude));
+        }
+        if (record->domain != NULL) {
+          result->Set(String::NewSymbol("domain"), String::New(record->domain));
+        }
+        if (record->zipcode != NULL) {
+          result->Set(String::NewSymbol("zipcode"), String::New(record->zipcode));
+        }
+        if (record->timezone != NULL) {
+          result->Set(String::NewSymbol("timezone"), String::New(record->timezone));
+        }
+        if (record->netspeed != NULL) {
+          result->Set(String::NewSymbol("netspeed"), String::New(record->netspeed));
+        }
+        if (record->iddcode != NULL) {
+          result->Set(String::NewSymbol("iddcode"), String::New(record->iddcode));
+        }
+        if (record->areacode != NULL) {
+          result->Set(String::NewSymbol("areacode"), String::New(record->areacode));
+        }
+        if (record->weatherstationcode != NULL) {
+          result->Set(String::NewSymbol("weatherstationcode"), String::New(record->weatherstationcode));
+        }
+        if (record->weatherstationname != NULL) {
+          result->Set(String::NewSymbol("weatherstationname"), String::New(record->weatherstationname));
+        }
+        if (record->mcc != NULL) {
+          result->Set(String::NewSymbol("mcc"), String::New(record->mcc));
+        }
+        if (record->mnc != NULL) {
+          result->Set(String::NewSymbol("mnc"), String::New(record->mnc));
+        }
+        if (record->mobilebrand != NULL) {
+          result->Set(String::NewSymbol("mobilebrand"), String::New(record->mobilebrand));
+        }
+        if (mode & ELEVATION) {
+          result->Set(String::NewSymbol("elevation"), Number::New(record->elevation));
+        }
+        if (record->usagetype != NULL) {
+          result->Set(String::NewSymbol("usagetype"), String::New(record->usagetype));
+        }
       }
-      if(record->region != NULL){
-        result->Set(
-              String::NewSymbol("region"),
-              String::New(record->region)
-            );
-      }
-      if(record->city != NULL){
-        result->Set(
-              String::NewSymbol("city"),
-              String::New(record->city)
-            );
-      }
-      IP2Location_free_record(record);
       return result;
     }
 };

@@ -22,8 +22,21 @@ File IO example:
 
     Ip2Location = require('node-ip2location');
     location = new Ip2Location('path/to/ip2location_database.bin');
+
     location.getRecord('8.8.8.8');
-    ...
+    { country_short: ....,
+      country_long: ....,
+      region: ....,
+      city: ....,
+      latitude: ....,
+      longitude: ....,
+      elevation: .... }
+
+    location.getRecord('8.8.8.8', Ip2Location.COUNTRYSHORT | Ip2Location.LATITUDE | Ip2Location.LONGITUDE);
+    { country_short: ....,
+      latitude: ....,
+      longitude: ....}
+
     location.opened == true
     location.mode   == "file"
     location.close();
@@ -43,6 +56,6 @@ Shared memory example:
     location.close();
 
 Each call to new Ip2Location(dbname, "shared") will try to re-open shared memory first.
-To unlink shared memory call (e.g. for database upgrade) call:
+To unlink shared memory (for e.g. database upgrade) call:
 
     Ip2Location.deleteShared();

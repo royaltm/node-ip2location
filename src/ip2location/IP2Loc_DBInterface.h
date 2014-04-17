@@ -22,15 +22,14 @@ enum IP2Location_mem_type
 };
 
 /*All below function are private function IP2Location library*/
-char* IP2Location_read128(FILE *handle, uint32_t position);
-uint32_t IP2Location_read32(FILE *handle, uint32_t position);
-uint8_t IP2Location_read8(FILE *handle, uint32_t position);
-char *IP2Location_readStr(FILE *handle, uint32_t position);
-float IP2Location_readFloat(FILE *handle, uint32_t position);
-int32_t IP2Location_DB_set_file_io();
-int32_t IP2Location_DB_set_memory_cache(FILE *filehandle);
-int32_t IP2Location_DB_set_shared_memory(FILE *filehandle);
-int32_t IP2Location_DB_close(FILE *filehandle);
+char* IP2Location_read128(FILE *handle, uint8_t *cache, uint32_t position);
+uint32_t IP2Location_read32(FILE *handle, uint8_t *cache, uint32_t position);
+uint8_t IP2Location_read8(FILE *handle, uint8_t *cache, uint32_t position);
+char *IP2Location_readStr(FILE *handle, uint8_t *cache, uint32_t position);
+float IP2Location_readFloat(FILE *handle, uint8_t *cache, uint32_t position);
+void *IP2Location_DB_set_memory_cache(FILE *filehandle);
+void *IP2Location_DB_set_shared_memory(FILE *filehandle);
+int32_t IP2Location_DB_close(FILE *filehandle, uint8_t *cache_shm, const enum IP2Location_mem_type access_type);
 void IP2Location_DB_del_shm();
 
 #ifdef __cplusplus
