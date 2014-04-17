@@ -98,7 +98,7 @@ int32_t IP2Location_DB_set_shared_memory(FILE *filehandle)
 		return -1;
 	}
 
-	cache_shm_ptr = mmap(MAP_ADDR, statbuf.st_size + 1, PROT_READ | PROT_WRITE, MAP_SHARED, shm_fd, 0);
+	cache_shm_ptr = mmap((void *)MAP_ADDR, statbuf.st_size + 1, PROT_READ | PROT_WRITE, MAP_SHARED, shm_fd, 0);
 	if (cache_shm_ptr == (void *) -1) {
 		close(shm_fd);
 		if( DB_loaded == 0 )

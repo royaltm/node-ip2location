@@ -204,7 +204,7 @@ static void      s_fake(mp_int z, int value, mp_digit vbuf[]);
 static int       s_cdig(mp_digit *da, mp_digit *db, mp_size len);
 
 /* Pack the unsigned digits of v into array t */
-static int       s_vpack(int v, mp_digit t[]);
+static mp_size   s_vpack(int v, mp_digit t[]);
 
 /* Compare magnitudes of a and b, returns <0, 0, >0 */
 static int       s_ucmp(mp_int a, mp_int b);
@@ -2094,7 +2094,7 @@ static void     s_clamp(mp_int z)
 
 static void      s_fake(mp_int z, int value, mp_digit vbuf[])
 {
-  mp_size uv = (mp_size) s_vpack(value, vbuf);
+  mp_size uv = s_vpack(value, vbuf);
 
   z->used = uv;
   z->alloc = MP_VALUE_DIGITS(value);
@@ -2124,10 +2124,10 @@ static int      s_cdig(mp_digit *da, mp_digit *db, mp_size len)
 
 /* {{{ s_vpack(v, t[]) */
 
-static int       s_vpack(int v, mp_digit t[])
+static mp_size   s_vpack(int v, mp_digit t[])
 {
   unsigned int uv = (unsigned int)((v < 0) ? -v : v);
-  int          ndig = 0;
+  mp_size      ndig = 0;
   
   if(uv == 0)
     t[ndig++] = 0;
@@ -2165,7 +2165,7 @@ static int      s_ucmp(mp_int a, mp_int b)
 static int      s_vcmp(mp_int a, int v)
 {
   mp_digit     vdig[MP_VALUE_DIGITS(v)];
-  int          ndig = 0;
+  mp_size      ndig = 0;
   mp_size      ua = MP_USED(a);
 
   ndig = s_vpack(v, vdig);

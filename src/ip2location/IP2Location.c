@@ -794,7 +794,6 @@ uint32_t IP2Location_ip2no(char* ipstring)
 }
 
 char* IP2Location_mp2string (mpz_t mp) {
-	mpz_t test = mp;
 	char *result = malloc(sizeof(char)*128);
 	memset(result, 0, 128);
 	mp_int_to_string(&mp, 10, result, 128);
@@ -852,7 +851,7 @@ int IP2Location_ip_is_ipv4 (char* ipaddr) {
 	StringList* iparray = 0;
 	StringList* ipsub = 0;
 	for(p=0; p<strlen(ipaddr); p++) {
-		if( ipaddr[p] >= '0' && ipaddr[p] <= '9' ||
+		if( (ipaddr[p] >= '0' && ipaddr[p] <= '9') ||
 			ipaddr[p] == '.' )
 			continue;
 		else
@@ -910,9 +909,9 @@ int IP2Location_ip_is_ipv6 (char* ipaddr) {
 
 		checkFlag = 1;
 		for(p=0; p<strlen(ipsub->data); p++) {
-			if( ipsub->data[p] >= '0' && ipsub->data[p] <= '9' ||
-				ipsub->data[p] >= 'a' && ipsub->data[p] <= 'f' ||
-				ipsub->data[p] >= 'A' && ipsub->data[p] <= 'F' )
+			if( (ipsub->data[p] >= '0' && ipsub->data[p] <= '9') ||
+				(ipsub->data[p] >= 'a' && ipsub->data[p] <= 'f') ||
+				(ipsub->data[p] >= 'A' && ipsub->data[p] <= 'F') )
 				continue;
 			else
 				checkFlag = 0;
