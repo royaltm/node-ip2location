@@ -37,7 +37,7 @@ uint8_t ELEVATION_POSITION[25]           = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
 uint8_t USAGETYPE_POSITION[25]           = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 12, 20};
 
 //Description: This function to set the DB access type.
-int32_t IP2Location_open_mem(IP2Location *loc, enum IP2Location_mem_type mtype) {
+int32_t IP2Location_open_mem(IP2Location *loc, enum IP2Location_mem_type mtype, char *shared_name) {
   if (loc == NULL || loc->cache != NULL)
     return -1;
 
@@ -48,21 +48,22 @@ int32_t IP2Location_open_mem(IP2Location *loc, enum IP2Location_mem_type mtype) 
     if ((loc->cache = (uint8_t *) IP2Location_DB_set_memory_cache(loc->filehandle)) == NULL) {
       return -1;
     }
+    loc->shm_node = NULL;
     break;
   case IP2LOCATION_SHARED_MEMORY:
-    if ((loc->cache = (uint8_t *) IP2Location_DB_set_shared_memory(loc->filehandle)) == NULL) {
+    if ((loc->shm_node = IP2Location_DB_set_shared_memory(loc->filehandle, shared_name)) == NULL) {
       return -1;
     }
+    loc->cache = loc->shm_node->mem_ptr;
     break;
   default:
     return -1;
   }
-
   loc->access_type = mtype;
   return 0;
 }
 // Description: Open the IP2Location database file
-IP2Location *IP2Location_open(char *db, enum IP2Location_mem_type mtype) {
+IP2Location *IP2Location_open(char *db, enum IP2Location_mem_type mtype, char *shared_name) {
   FILE *f;
   IP2Location *loc;
 
@@ -76,7 +77,7 @@ IP2Location *IP2Location_open(char *db, enum IP2Location_mem_type mtype) {
   loc->filehandle = f;
   loc->cache = NULL;
 
-  if (IP2Location_open_mem(loc, mtype) == 0) {
+  if (IP2Location_open_mem(loc, mtype, shared_name) == 0) {
     IP2Location_initialize(loc);
     return loc;
   } else {
@@ -88,15 +89,17 @@ IP2Location *IP2Location_open(char *db, enum IP2Location_mem_type mtype) {
 // Description: Close the IP2Location database file
 uint32_t IP2Location_close(IP2Location *loc) {
   if (loc != NULL) {
-    IP2Location_DB_close(loc->filehandle, loc->cache, loc->access_type);
+    IP2Location_DB_close(loc->filehandle, loc->cache, loc->shm_node);
     free(loc);
   }
   return 0;
 }
 
 // Description: Delete IP2Location shared memory if its present.  
-void IP2Location_delete_shm() {
-  IP2Location_DB_del_shm();
+void IP2Location_delete_shm(IP2Location *loc) {
+  if (loc != NULL && loc->shm_node != NULL) {
+    IP2Location_DB_del_shm(loc->shm_node->name);
+  }
 }
 
 // Descrption: Startup

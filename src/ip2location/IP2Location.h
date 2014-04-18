@@ -86,6 +86,7 @@ extern "C" {
 typedef struct {
 	FILE *filehandle;
 	uint8_t *cache;
+	SharedMemList *shm_node;
 	enum IP2Location_mem_type access_type;
 	uint8_t databasetype;
 	uint8_t databasecolumn;
@@ -128,11 +129,11 @@ typedef struct StringList{
 /*##################
 # Public Functions
 ##################*/
-IP2Location *IP2Location_open(char *db, enum IP2Location_mem_type mtype);
+IP2Location *IP2Location_open(char *db, enum IP2Location_mem_type mtype, char *shared_name);
 uint32_t IP2Location_close(IP2Location *loc);
 IP2LocationRecord *IP2Location_get_mode(IP2Location *loc, char *ip, uint32_t mode);
 void IP2Location_free_record(IP2LocationRecord *record);
-void IP2Location_delete_shm();
+void IP2Location_delete_shm(IP2Location *loc);
 
 /*###################
 # Private Functions

@@ -28,19 +28,11 @@
 #include "IP2Location.h"
 #include "IP2Loc_DBInterface.h"
 
-#define IP2LOCATION_SHM "/IP2location_Shm"
+#define IP2LOCATION_SHM_DEFAULT "/IP2location_Shm"
 #define MAP_ADDR 4194500608
 
 //Static variables
-static void *cache_shm_shared = NULL;
-static int cache_shm_counter = 0;
-#ifndef WIN32
-static int32_t shm_fd;
-#else
-#ifdef WIN32
-HANDLE shm_fd;
-#endif
-#endif
+static SharedMemList *shm_root = NULL;
 
 //Static functions
 static int32_t IP2Location_DB_Load_to_mem(FILE *filehandle, void *memory, size_t size);
@@ -67,22 +59,34 @@ void *IP2Location_DB_set_memory_cache(FILE *filehandle) {
 
 //Description: set the DB access method as shared memory
 #ifndef WIN32
-void *IP2Location_DB_set_shared_memory(FILE *filehandle) {
+SharedMemList *IP2Location_DB_set_shared_memory(FILE *filehandle, char *shared_name) {
   struct stat statbuf;
   size_t shm_size;
+  SHARED_MEM_FHANDLE shm_fd;
+  void *shm_shared_ptr;
   int32_t DB_loaded = 1;
 
-  if (cache_shm_shared == NULL) {
-    if ( ( shm_fd = shm_open(IP2LOCATION_SHM, O_RDWR | O_CREAT | O_EXCL, 0777) ) != -1 ) {
+  if (shared_name == NULL) {
+    shared_name = IP2LOCATION_SHM_DEFAULT;
+  }
+
+  SharedMemList *shmnode = FindOrCreateSharedMemNode(shared_name);
+
+  shm_shared_ptr = shmnode->mem_ptr;
+
+  if (shm_shared_ptr == NULL) {
+    if ( ( shm_fd = shm_open(shmnode->name, O_RDWR | O_CREAT | O_EXCL, 0777) ) != -1 ) {
       DB_loaded = 0;
-    } else if ( ( shm_fd = shm_open(IP2LOCATION_SHM, O_RDWR , 0777) ) == -1 ) { 
+    } else if ( ( shm_fd = shm_open(shmnode->name, O_RDWR , 0777) ) == -1 ) {
+      FreeSharedMemNode(shmnode);
       return NULL;
     }
 
     if (DB_loaded == 0) {
       if ( fstat(fileno(filehandle), &statbuf) == -1 ) {
         close(shm_fd);
-        shm_unlink(IP2LOCATION_SHM);
+        shm_unlink(shmnode->name);
+        FreeSharedMemNode(shmnode);
         return NULL;
       }
 
@@ -90,49 +94,63 @@ void *IP2Location_DB_set_shared_memory(FILE *filehandle) {
 
       if ( ftruncate(shm_fd, shm_size) == -1 ) {
         close(shm_fd);
-        shm_unlink(IP2LOCATION_SHM);
+        shm_unlink(shmnode->name);
+        FreeSharedMemNode(shmnode);
         return NULL;
       }
     } else {
       if ( fstat(shm_fd, &statbuf) == -1 ) {
         close(shm_fd);
+        FreeSharedMemNode(shmnode);
         return NULL;
       }
       shm_size = statbuf.st_size;
     }
 
-    cache_shm_shared = mmap((void *)MAP_ADDR, shm_size, PROT_READ | PROT_WRITE, MAP_SHARED, shm_fd, 0);
+    shm_shared_ptr = mmap((void *)MAP_ADDR, shm_size, PROT_READ | PROT_WRITE, MAP_SHARED, shm_fd, 0);
 
-    if ( cache_shm_shared == (void *) -1 ) {
+    if ( shm_shared_ptr == (void *) -1 ) {
       close(shm_fd);
       if( DB_loaded == 0 )
-        shm_unlink(IP2LOCATION_SHM);
-      cache_shm_shared = NULL;
+        shm_unlink(shmnode->name);
+      FreeSharedMemNode(shmnode);
       return NULL;
     }
     if ( DB_loaded == 0 ) {
-      if ( IP2Location_DB_Load_to_mem(filehandle, cache_shm_shared, shm_size - 1) == -1 ) {
-        munmap(cache_shm_shared, shm_size);
+      if ( IP2Location_DB_Load_to_mem(filehandle, shm_shared_ptr, shm_size - 1) == -1 ) {
+        munmap(shm_shared_ptr, shm_size);
         close(shm_fd);
-        cache_shm_shared = NULL;
-        shm_unlink(IP2LOCATION_SHM);
+        shm_unlink(shmnode->name);
+        FreeSharedMemNode(shmnode);
         return NULL;
       }
     }
 
-    cache_shm_counter = 1;
+    shmnode->mem_ptr = shm_shared_ptr;
+    shmnode->shm_fd = shm_fd;
+    shmnode->count = 1;
   } else {
-    ++cache_shm_counter;
+    shmnode->count++;
   }
-  return cache_shm_shared;
+  return shmnode;
 }
 #else
 #ifdef WIN32
-void *IP2Location_DB_set_shared_memory(FILE *filehandle) {
+SharedMemList *IP2Location_DB_set_shared_memory(FILE *filehandle, char *shared_name) {
   struct stat statbuf;
+  SHARED_MEM_FHANDLE shm_fd;
+  void *shm_shared_ptr;
   int32_t DB_loaded = 1;
 
-  if (cache_shm_shared == NULL) {
+  if (shared_name == NULL) {
+    shared_name = IP2LOCATION_SHM_DEFAULT;
+  }
+
+  SharedMemList *shmnode = FindOrCreateSharedMemNode(shared_name);
+
+  shm_shared_ptr = shmnode->mem_ptr;
+
+  if (shm_shared_ptr == NULL) {
     if(fstat(fileno(filehandle), &statbuf) == -1) {
       return NULL;
     }
@@ -143,39 +161,41 @@ void *IP2Location_DB_set_shared_memory(FILE *filehandle) {
                    PAGE_READWRITE,
                    0,
                    statbuf.st_size + 1,
-                   TEXT(IP2LOCATION_SHM));
+                   TEXT(shmnode->name));
     if (shm_fd == NULL) {
       return NULL;
     }
 
     DB_loaded = (GetLastError() == ERROR_ALREADY_EXISTS);
 
-    cache_shm_shared = MapViewOfFile( 
+    shm_shared_ptr = MapViewOfFile(
         shm_fd,
         FILE_MAP_WRITE,
         0, 
         0,
         0);
 
-    if (cache_shm_shared == NULL) {
+    if (shm_shared_ptr == NULL) {
       CloseHandle(shm_fd);
       return NULL;
     }
     
     if( DB_loaded == 0 ) {
-      if ( IP2Location_DB_Load_to_mem(filehandle, cache_shm_shared, statbuf.st_size) == -1 ) {
-        UnmapViewOfFile(cache_shm_shared); 
+      if ( IP2Location_DB_Load_to_mem(filehandle, shm_shared_ptr, statbuf.st_size) == -1 ) {
+        UnmapViewOfFile(shm_shared_ptr);
         CloseHandle(shm_fd);
-        cache_shm_shared = NULL;
-        return NULL;  
+        shm_shared_ptr = NULL;
+        return NULL;
       }
     }
 
-    cache_shm_counter = 1;
+    shmnode->mem_ptr = shm_shared_ptr;
+    shmnode->shm_fd = shm_fd;
+    shmnode->count = 1;
   } else {
-    ++cache_shm_counter;
+    shmnode->count++;
   }
-  return cache_shm_shared;
+  return shmnode;
 }
 #endif
 #endif
@@ -184,52 +204,54 @@ void *IP2Location_DB_set_shared_memory(FILE *filehandle) {
 int32_t IP2Location_DB_Load_to_mem(FILE *filehandle, void *memory, size_t size) {
   fseek(filehandle, SEEK_SET, 0);
   if ( fread(memory, size, 1, filehandle) != 1 )
-    return -1;  
+    return -1;
   return 0;
 }
 
 //Close the corresponding memory, based on the opened option. 
-int32_t IP2Location_DB_close(FILE *filehandle, uint8_t *cache_shm, const enum IP2Location_mem_type access_type) {
+int32_t IP2Location_DB_close(FILE *filehandle, uint8_t *cache_shm, SharedMemList *shmnode) {
   struct stat statbuf;
   if ( filehandle != NULL )
-    fclose(filehandle);  
-  if ( access_type == IP2LOCATION_CACHE_MEMORY ) {
-    if( cache_shm != NULL )
-      free(cache_shm);
-  }
-  else if ( access_type == IP2LOCATION_SHARED_MEMORY ) { 
-  	if ((--cache_shm_counter) <= 0 && cache_shm_shared != NULL) {
+    fclose(filehandle);
+  if ( shmnode != NULL ) {
+    if ((--(shmnode->count)) <= 0 && shmnode->mem_ptr != NULL) {
 #ifndef  WIN32
-      if ( fstat(shm_fd, &statbuf) == 0 ) {
-        munmap(cache_shm_shared, statbuf.st_size);
+      if ( fstat(shmnode->shm_fd, &statbuf) == 0 ) {
+        munmap(shmnode->mem_ptr, statbuf.st_size);
       }
-      close(shm_fd);
+      close(shmnode->shm_fd);
 #else
 #ifdef WIN32
-      UnmapViewOfFile(cache_shm_shared); 
-      CloseHandle(shm_fd);
+      UnmapViewOfFile(shmnode->mem_ptr);
+      CloseHandle(shmnode->shm_fd);
 #endif
 #endif
-      cache_shm_shared = NULL;
+      shmnode->mem_ptr = NULL;
+      FreeSharedMemNode(shmnode);
     }
+  } else if ( cache_shm != NULL ) {
+    free(cache_shm);
   }
+
   return 0;
 }
 
 #ifndef  WIN32
-void IP2Location_DB_del_shm() {
-  shm_unlink(IP2LOCATION_SHM);
+void IP2Location_DB_del_shm(char *name) {
+  if (name != NULL) {
+    shm_unlink(name);
+  }
 }
 #else
 #ifdef WIN32
-void IP2Location_DB_del_shm() {
+void IP2Location_DB_del_shm(char *name) {
 }
 #endif
 #endif
 
 mpz_t IP2Location_read128(FILE *handle, uint8_t *cache, uint32_t position) {
   uint32_t b96_127 = IP2Location_read32(handle, cache, position);
-  uint32_t b64_95 = IP2Location_read32(handle, cache, position + 4); 
+  uint32_t b64_95 = IP2Location_read32(handle, cache, position + 4);
   uint32_t b32_63 = IP2Location_read32(handle, cache, position + 8);
   uint32_t b1_31 = IP2Location_read32(handle, cache, position + 12);
 
@@ -279,10 +301,10 @@ uint32_t IP2Location_read32(FILE *handle, uint8_t *cache, uint32_t position) {
       fread(&byte4, 1, 1, handle);
     }
   } else {
-    byte1 = cache[ position - 1 ]; 
-    byte2 = cache[ position ]; 
-    byte3 = cache[ position + 1 ]; 
-    byte4 = cache[ position + 2 ]; 
+    byte1 = cache[ position - 1 ];
+    byte2 = cache[ position ];
+    byte3 = cache[ position + 1 ];
+    byte4 = cache[ position + 2 ];
   }
   return ((byte4 << 24) | (byte3 << 16) | (byte2 << 8) | (byte1));
 }
@@ -296,7 +318,7 @@ uint8_t IP2Location_read8(FILE *handle, uint8_t *cache, uint32_t position) {
       fread(&ret, 1, 1, handle);
     }
   } else {
-    ret = cache[ position - 1 ]; 
+    ret = cache[ position - 1 ];
   }
   return ret;
 }
@@ -314,10 +336,10 @@ char *IP2Location_readStr(FILE *handle, uint8_t *cache, uint32_t position) {
 	    fread(str, size, 1, handle);
 	  }
 	} else {
-    size = cache[ position ]; 
+    size = cache[ position ];
     str = (char *)malloc(size+1);
     memset(str, 0, size+1);
-    memcpy((void*) str, (void*)&cache[ position + 1 ], size); 
+    memcpy((void*) str, (void*)&cache[ position + 1 ], size);
   }
   return str;
 }
@@ -338,10 +360,10 @@ float IP2Location_readFloat(FILE *handle, uint8_t *cache, uint32_t position) {
 	    fread(p,   1, 1, handle);
 	  }
   } else {
-    *(p+3) = cache[ position - 1 ]; 
-    *(p+2) = cache[ position ]; 
-    *(p+1) = cache[ position + 1 ]; 
-    *(p)   = cache[ position + 2 ]; 
+    *(p+3) = cache[ position - 1 ];
+    *(p+2) = cache[ position ];
+    *(p+1) = cache[ position + 1 ];
+    *(p)   = cache[ position + 2 ];
   }
 #else
   if (cache == NULL) {
@@ -350,8 +372,57 @@ float IP2Location_readFloat(FILE *handle, uint8_t *cache, uint32_t position) {
 	    fread(&ret, 4, 1, handle);
 	  }
   } else {
-    memcpy((void*) &ret, (void*)&cache[ position - 1 ], 4); 
+    memcpy((void*) &ret, (void*)&cache[ position - 1 ], 4);
   }
 #endif
   return ret;
 }
+
+void PrependSharedMemNode(SharedMemList *new_shm) {
+  new_shm->prev = NULL;
+  if (shm_root) {
+    new_shm->next = shm_root;
+    shm_root->prev = new_shm;
+  } else {
+    new_shm->next = NULL;
+  }
+  shm_root = new_shm;
+}
+
+SharedMemList *FindSharedMemNode(char *name) {
+  SharedMemList *shm = shm_root;
+  while (shm != NULL) {
+    if (strcmp(shm->name, name) == 0) break;
+    shm = shm->next;
+  }
+  return shm;
+}
+
+SharedMemList *FindOrCreateSharedMemNode(char *name) {
+  SharedMemList *shm = FindSharedMemNode(name);
+  if (shm == NULL) {
+    shm = (SharedMemList *)malloc(sizeof(SharedMemList));
+    size_t namelen = strlen(name) + 1;
+    shm->name = (char *)malloc(namelen);
+    strncpy(shm->name, name, namelen);
+    shm->mem_ptr = NULL;
+    shm->count = 0;
+    PrependSharedMemNode(shm);
+  }
+  return shm;
+}
+
+void FreeSharedMemNode(SharedMemList *shm) {
+  if (shm_root == shm) {
+    shm_root = shm->next;
+  }
+  if (shm->prev != NULL) {
+    shm->prev->next = shm->next;
+  }
+  if (shm->next != NULL) {
+    shm->next->prev = shm->prev;
+  }
+  free(shm->name);
+  free(shm);
+}
+
