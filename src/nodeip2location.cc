@@ -46,8 +46,9 @@ class Location: public node::ObjectWrap {
       tpl->Set(String::NewSymbol("USAGETYPE"), Int32::New(USAGETYPE), ReadOnly);
       tpl->Set(String::NewSymbol("ALL"), Int32::New(ALL), ReadOnly);
 
-      NODE_SET_PROTOTYPE_METHOD(tpl, "getRecord", GetRecord);
+      NODE_SET_PROTOTYPE_METHOD(tpl, "query", Query);
       NODE_SET_PROTOTYPE_METHOD(tpl, "close", CloseDatabase);
+      NODE_SET_PROTOTYPE_METHOD(tpl, "info", GetDbInfo);
       NODE_SET_METHOD(tpl, "deleteShared", DeleteShared);
 
       constructor = Persistent<Function>::New(tpl->GetFunction());
@@ -127,7 +128,28 @@ class Location: public node::ObjectWrap {
       return scope.Close(Undefined());
     }
 
-    static Handle<Value> GetRecord(const Arguments& args) {
+    static Handle<Value> GetDbInfo(const Arguments& args) {
+      HandleScope scope;
+      Location* location = ObjectWrap::Unwrap<Location>(args.This());
+      IP2Location *iplocdb = location->iplocdb;
+      Local<Object> info = Object::New();
+      if (iplocdb) {
+        info->Set(String::NewSymbol("databasetype"), Integer::New(iplocdb->databasetype));
+        info->Set(String::NewSymbol("databasecolumn"), Integer::New(iplocdb->databasecolumn));
+        info->Set(String::NewSymbol("databaseyear"), Integer::New(iplocdb->databaseyear));
+        info->Set(String::NewSymbol("databaseyear"), Integer::New(iplocdb->databaseyear));
+        info->Set(String::NewSymbol("databasemonth"), Integer::New(iplocdb->databasemonth));
+        info->Set(String::NewSymbol("databaseday"), Integer::New(iplocdb->databaseday));
+        info->Set(String::NewSymbol("databasecount"), Integer::New(iplocdb->databasecount));
+        info->Set(String::NewSymbol("databaseaddr"), Integer::New(iplocdb->databaseaddr));
+        info->Set(String::NewSymbol("ipversion"), Integer::New(iplocdb->ipversion));
+        return scope.Close(info);
+      } else {
+        return scope.Close(Null());
+      }
+    }
+
+    static Handle<Value> Query(const Arguments& args) {
       HandleScope scope;
       uint32_t mode(ALL);
       String::Utf8Value ip(args[0]->ToString());

@@ -23,7 +23,7 @@ File IO example:
     Ip2Location = require('node-ip2location');
     location = new Ip2Location('path/to/ip2location_database.bin');
 
-    location.getRecord('8.8.8.8');
+    location.query('8.8.8.8');
     { country_short: ....,
       country_long: ....,
       region: ....,
@@ -32,7 +32,7 @@ File IO example:
       longitude: ....,
       elevation: .... }
 
-    location.getRecord('8.8.8.8', Ip2Location.COUNTRYSHORT | Ip2Location.LATITUDE | Ip2Location.LONGITUDE);
+    location.query('8.8.8.8', Ip2Location.COUNTRYSHORT | Ip2Location.LATITUDE | Ip2Location.LONGITUDE);
     { country_short: ....,
       latitude: ....,
       longitude: ....}
