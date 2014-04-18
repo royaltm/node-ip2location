@@ -43,7 +43,7 @@ HANDLE shm_fd;
 #endif
 
 //Static functions
-static int32_t IP2Location_DB_Load_to_mem(FILE *filehandle, void *memory, int64_t size);
+static int32_t IP2Location_DB_Load_to_mem(FILE *filehandle, void *memory, size_t size);
 
 //Description: set the DB access method as memory cache and read the file into cache
 void *IP2Location_DB_set_memory_cache(FILE *filehandle) {
@@ -69,39 +69,50 @@ void *IP2Location_DB_set_memory_cache(FILE *filehandle) {
 #ifndef WIN32
 void *IP2Location_DB_set_shared_memory(FILE *filehandle) {
   struct stat statbuf;
+  size_t shm_size;
   int32_t DB_loaded = 1;
 
   if (cache_shm_shared == NULL) {
-    if ( ( shm_fd = shm_open(IP2LOCATION_SHM, O_RDWR | O_CREAT | O_EXCL, 0777) ) != -1 ){
-      DB_loaded = 0; 
+    if ( ( shm_fd = shm_open(IP2LOCATION_SHM, O_RDWR | O_CREAT | O_EXCL, 0777) ) != -1 ) {
+      DB_loaded = 0;
     } else if ( ( shm_fd = shm_open(IP2LOCATION_SHM, O_RDWR , 0777) ) == -1 ) { 
       return NULL;
     }
 
-    if ( fstat(fileno(filehandle), &statbuf) == -1 ) {
-      close(shm_fd);
-      if ( DB_loaded == 0 )
+    if (DB_loaded == 0) {
+      if ( fstat(fileno(filehandle), &statbuf) == -1 ) {
+        close(shm_fd);
         shm_unlink(IP2LOCATION_SHM);
-      return NULL;
+        return NULL;
+      }
+
+      shm_size = statbuf.st_size + 1;
+
+      if ( ftruncate(shm_fd, shm_size) == -1 ) {
+        close(shm_fd);
+        shm_unlink(IP2LOCATION_SHM);
+        return NULL;
+      }
+    } else {
+      if ( fstat(shm_fd, &statbuf) == -1 ) {
+        close(shm_fd);
+        return NULL;
+      }
+      shm_size = statbuf.st_size;
     }
 
-    if ( DB_loaded == 0 && ftruncate(shm_fd, statbuf.st_size + 1) == -1 ) {
-      close(shm_fd);
-      shm_unlink(IP2LOCATION_SHM);
-      return NULL;
-    }
-
-    cache_shm_shared = mmap((void *)MAP_ADDR, statbuf.st_size + 1, PROT_READ | PROT_WRITE, MAP_SHARED, shm_fd, 0);
+    cache_shm_shared = mmap((void *)MAP_ADDR, shm_size, PROT_READ | PROT_WRITE, MAP_SHARED, shm_fd, 0);
 
     if ( cache_shm_shared == (void *) -1 ) {
       close(shm_fd);
       if( DB_loaded == 0 )
         shm_unlink(IP2LOCATION_SHM);
+      cache_shm_shared = NULL;
       return NULL;
     }
     if ( DB_loaded == 0 ) {
-      if ( IP2Location_DB_Load_to_mem(filehandle, cache_shm_shared, statbuf.st_size) == -1 ) {
-        munmap(cache_shm_shared, statbuf.st_size);
+      if ( IP2Location_DB_Load_to_mem(filehandle, cache_shm_shared, shm_size - 1) == -1 ) {
+        munmap(cache_shm_shared, shm_size);
         close(shm_fd);
         cache_shm_shared = NULL;
         shm_unlink(IP2LOCATION_SHM);
@@ -133,11 +144,11 @@ void *IP2Location_DB_set_shared_memory(FILE *filehandle) {
                    0,
                    statbuf.st_size + 1,
                    TEXT(IP2LOCATION_SHM));
-    if(shm_fd == NULL) {
+    if (shm_fd == NULL) {
       return NULL;
     }
 
-      DB_loaded = (GetLastError() == ERROR_ALREADY_EXISTS);
+    DB_loaded = (GetLastError() == ERROR_ALREADY_EXISTS);
 
     cache_shm_shared = MapViewOfFile( 
         shm_fd,
@@ -146,8 +157,8 @@ void *IP2Location_DB_set_shared_memory(FILE *filehandle) {
         0,
         0);
 
-    if(cache_shm_shared == NULL) {
-      UnmapViewOfFile(cache_shm_shared); 
+    if (cache_shm_shared == NULL) {
+      CloseHandle(shm_fd);
       return NULL;
     }
     
@@ -170,7 +181,7 @@ void *IP2Location_DB_set_shared_memory(FILE *filehandle) {
 #endif
 
 //Load the DB file into shared/cache memory  
-int32_t IP2Location_DB_Load_to_mem(FILE *filehandle, void *memory, int64_t size) {
+int32_t IP2Location_DB_Load_to_mem(FILE *filehandle, void *memory, size_t size) {
   fseek(filehandle, SEEK_SET, 0);
   if ( fread(memory, size, 1, filehandle) != 1 )
     return -1;  
@@ -189,7 +200,7 @@ int32_t IP2Location_DB_close(FILE *filehandle, uint8_t *cache_shm, const enum IP
   else if ( access_type == IP2LOCATION_SHARED_MEMORY ) { 
   	if ((--cache_shm_counter) <= 0 && cache_shm_shared != NULL) {
 #ifndef  WIN32
-      if(fstat(fileno(filehandle), &statbuf) == 0) {
+      if ( fstat(shm_fd, &statbuf) == 0 ) {
         munmap(cache_shm_shared, statbuf.st_size);
       }
       close(shm_fd);
@@ -286,7 +297,7 @@ uint8_t IP2Location_read8(FILE *handle, uint8_t *cache, uint32_t position) {
     }
   } else {
     ret = cache[ position - 1 ]; 
-  }    
+  }
   return ret;
 }
 
