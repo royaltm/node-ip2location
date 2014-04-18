@@ -236,6 +236,7 @@ class Location: public node::ObjectWrap {
         if (record->usagetype != NULL) {
           result->Set(String::NewSymbol("usagetype"), String::New(record->usagetype));
         }
+        IP2Location_free_record(record);
       }
       return scope.Close(result);
     }
