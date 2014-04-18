@@ -227,7 +227,7 @@ void IP2Location_DB_del_shm() {
 #endif
 #endif
 
-char* IP2Location_read128(FILE *handle, uint8_t *cache, uint32_t position) {
+mpz_t IP2Location_read128(FILE *handle, uint8_t *cache, uint32_t position) {
   uint32_t b96_127 = IP2Location_read32(handle, cache, position);
   uint32_t b64_95 = IP2Location_read32(handle, cache, position + 4); 
   uint32_t b32_63 = IP2Location_read32(handle, cache, position + 8);
@@ -260,7 +260,7 @@ char* IP2Location_read128(FILE *handle, uint8_t *cache, uint32_t position) {
   mp_int_add(&mp1_31, &mp32_63, &result);
   mp_int_add(&result, &mp64_95, &result);
   mp_int_add(&result, &mp96_127, &result);
-  return IP2Location_mp2string(result);
+  return result;
 }
 
 uint32_t IP2Location_read32(FILE *handle, uint8_t *cache, uint32_t position) {

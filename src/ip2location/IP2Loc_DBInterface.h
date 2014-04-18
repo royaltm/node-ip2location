@@ -22,7 +22,7 @@ enum IP2Location_mem_type
 };
 
 /*All below function are private function IP2Location library*/
-char* IP2Location_read128(FILE *handle, uint8_t *cache, uint32_t position);
+mpz_t IP2Location_read128(FILE *handle, uint8_t *cache, uint32_t position);
 uint32_t IP2Location_read32(FILE *handle, uint8_t *cache, uint32_t position);
 uint8_t IP2Location_read8(FILE *handle, uint8_t *cache, uint32_t position);
 char *IP2Location_readStr(FILE *handle, uint8_t *cache, uint32_t position);

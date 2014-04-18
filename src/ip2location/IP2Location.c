@@ -168,8 +168,8 @@ IP2LocationRecord *IP2Location_get_ipv6_record(IP2Location *loc, char *ipstring,
     
   while (low <= high) {
     mid = (uint32_t)((low + high)/2);
-    mp_int_read_string(&ipfrom, 10, IP2Location_read128(handle, cache, baseaddr + mid * (dbcolumn * 4 + 12))); 
-    mp_int_read_string(&ipto, 10, IP2Location_read128(handle, cache, baseaddr + (mid + 1) * (dbcolumn * 4 + 12)));
+    ipfrom = IP2Location_read128(handle, cache, baseaddr + mid * (dbcolumn * 4 + 12)); 
+    ipto = IP2Location_read128(handle, cache, baseaddr + (mid + 1) * (dbcolumn * 4 + 12));
     
     if( (mp_int_compare(&ipno, &ipfrom) >= 0) && (mp_int_compare(&ipno, &ipto) < 0))
     {
@@ -589,12 +589,13 @@ uint32_t IP2Location_ip2no(char* ipstring) {
   return a;
 }
 
-char* IP2Location_mp2string (mpz_t mp) {
-  char *result = malloc(sizeof(char)*128);
-  memset(result, 0, 128);
-  mp_int_to_string(&mp, 10, result, 128);
-  return result;
-}
+// BAD JUJU
+// char* IP2Location_mp2string (mpz_t mp) {
+//   char *result = malloc(sizeof(char)*128);
+//   memset(result, 0, 128);
+//   mp_int_to_string(&mp, 10, result, 128);
+//   return result;
+// }
 
 mpz_t IP2Location_ipv6_to_no(char* ipaddr) {
   char expanded[8];
