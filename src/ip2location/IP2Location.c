@@ -1,5 +1,3 @@
-
-
 #ifdef WIN32
 #include <winsock2.h>
 #else
@@ -38,27 +36,6 @@ uint8_t MOBILEBRAND_POSITION[25]         = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
 uint8_t ELEVATION_POSITION[25]           = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 11, 19, 0, 19};
 uint8_t USAGETYPE_POSITION[25]           = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 12, 20};
 
-// Description: Open the IP2Location database file
-IP2Location *IP2Location_open(char *db)
-{
-  FILE *f;
-  IP2Location *loc;
-
-  if ( ( f = fopen( db, "rb")) == NULL) {
-    printf("IP2Location library error in opening database %s.\n", db);
-    return NULL;
-  }
-
-  loc = (IP2Location *) malloc(sizeof(IP2Location));
-  memset(loc, 0, sizeof(IP2Location));
-
-  loc->filehandle = f;
-  loc->cache = NULL;
-  loc->access_type = IP2LOCATION_FILE_IO;
-
-  IP2Location_initialize(loc);
-  return loc;
-}
 //Description: This function to set the DB access type.
 int32_t IP2Location_open_mem(IP2Location *loc, enum IP2Location_mem_type mtype) {
   if (loc == NULL || loc->cache != NULL)
@@ -84,7 +61,30 @@ int32_t IP2Location_open_mem(IP2Location *loc, enum IP2Location_mem_type mtype) 
   loc->access_type = mtype;
   return 0;
 }
+// Description: Open the IP2Location database file
+IP2Location *IP2Location_open(char *db, enum IP2Location_mem_type mtype) {
+  FILE *f;
+  IP2Location *loc;
 
+  if ( ( f = fopen( db, "rb")) == NULL) {
+    return NULL;
+  }
+
+  loc = (IP2Location *) malloc(sizeof(IP2Location));
+  memset(loc, 0, sizeof(IP2Location));
+
+  loc->filehandle = f;
+  loc->cache = NULL;
+
+  if (IP2Location_open_mem(loc, mtype) == 0) {
+    IP2Location_initialize(loc);
+    return loc;
+  } else {
+    free(loc);
+    fclose(f);
+    return NULL;
+  }
+}
 // Description: Close the IP2Location database file
 uint32_t IP2Location_close(IP2Location *loc) {
   if (loc != NULL) {

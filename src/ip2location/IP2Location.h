@@ -128,8 +128,7 @@ typedef struct StringList{
 /*##################
 # Public Functions
 ##################*/
-IP2Location *IP2Location_open(char *db);
-int IP2Location_open_mem(IP2Location *loc, enum IP2Location_mem_type);
+IP2Location *IP2Location_open(char *db, enum IP2Location_mem_type mtype);
 uint32_t IP2Location_close(IP2Location *loc);
 IP2LocationRecord *IP2Location_get_mode(IP2Location *loc, char *ip, uint32_t mode);
 void IP2Location_free_record(IP2LocationRecord *record);

@@ -55,10 +55,7 @@ class Location: public node::ObjectWrap {
     }
 
     Location(char *locdbpath, enum IP2Location_mem_type mtype) {
-      iplocdb = IP2Location_open(locdbpath);
-      if (IP2Location_open_mem(iplocdb, mtype) == -1) {
-        Close();
-      }
+      iplocdb = IP2Location_open(locdbpath, mtype);
     }
 
     ~Location() {
@@ -206,7 +203,7 @@ class Location: public node::ObjectWrap {
           result->Set(String::NewSymbol("usagetype"), String::New(record->usagetype));
         }
       }
-      return result;
+      return scope.Close(result);
     }
 };
 
