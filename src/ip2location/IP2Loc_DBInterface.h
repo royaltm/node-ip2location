@@ -33,6 +33,9 @@ typedef struct SharedMemList{
   char* name;
   void *mem_ptr;
   int count;
+#ifndef WIN32
+  ino_t mem_ino;
+#endif
   SHARED_MEM_FHANDLE shm_fd;
   struct SharedMemList* prev;
   struct SharedMemList* next;
@@ -47,8 +50,10 @@ float IP2Location_readFloat(FILE *handle, uint8_t *cache, uint32_t position);
 void *IP2Location_DB_set_memory_cache(FILE *filehandle);
 SharedMemList *IP2Location_DB_set_shared_memory(FILE *filehandle, char *shared_name);
 int32_t IP2Location_DB_close(FILE *filehandle, uint8_t *cache_shm, SharedMemList *shmnode);
-void IP2Location_DB_del_shm(char *name);
-SharedMemList *FindOrCreateSharedMemNode(char *name);
+void IP2Location_DB_del_shm(SharedMemList *shmnode);
+SharedMemList *CreateSharedMemNode(char *name);
+SharedMemList *FindSharedMemNode(char *name);
+void DetachSharedMemNode(SharedMemList *shm);
 void FreeSharedMemNode(SharedMemList *shm);
 
 #ifdef __cplusplus

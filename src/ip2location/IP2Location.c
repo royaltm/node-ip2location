@@ -48,7 +48,6 @@ int32_t IP2Location_open_mem(IP2Location *loc, enum IP2Location_mem_type mtype, 
     if ((loc->cache = (uint8_t *) IP2Location_DB_set_memory_cache(loc->filehandle)) == NULL) {
       return -1;
     }
-    loc->shm_node = NULL;
     break;
   case IP2LOCATION_SHARED_MEMORY:
     if ((loc->shm_node = IP2Location_DB_set_shared_memory(loc->filehandle, shared_name)) == NULL) {
@@ -76,6 +75,7 @@ IP2Location *IP2Location_open(char *db, enum IP2Location_mem_type mtype, char *s
 
   loc->filehandle = f;
   loc->cache = NULL;
+  loc->shm_node = NULL;
 
   if (IP2Location_open_mem(loc, mtype, shared_name) == 0) {
     IP2Location_initialize(loc);
@@ -97,8 +97,8 @@ uint32_t IP2Location_close(IP2Location *loc) {
 
 // Description: Delete IP2Location shared memory if its present.  
 void IP2Location_delete_shm(IP2Location *loc) {
-  if (loc != NULL && loc->shm_node != NULL) {
-    IP2Location_DB_del_shm(loc->shm_node->name);
+  if (loc != NULL) {
+    IP2Location_DB_del_shm(loc->shm_node);
   }
 }
 
