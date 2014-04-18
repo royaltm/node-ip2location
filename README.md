@@ -55,7 +55,14 @@ Shared memory example:
     location.mode == "shared";
     location.close();
 
-Each call to new Ip2Location(dbname, "shared") will try to re-open shared memory first.
-To unlink shared memory (for e.g. database upgrade) call:
+Each consecutive call to `new Ip2Location(dbname, "shared")` will try to re-use existing shared memory.
 
-    Ip2Location.deleteShared();
+In Unix-ish sytems:
+
+A call to location.close() will not delete the shared memory, it will only detach process from it. To delete the shared memory call:
+
+    location.deleteShared();
+
+When the above function is called, and if any other processes is attached to the shared memory, it will only delete the name of the shared memory. The other processes will continue to use the shared memory and it will be freed only after last attached process is detached from it.
+
+Please refer to shm_open and shm_unlink man pages for more info.
