@@ -36,49 +36,49 @@
 #define  ALL COUNTRYSHORT | COUNTRYLONG | REGION | CITY | ISP | LATITUDE | LONGITUDE | DOMAIN | ZIPCODE | TIMEZONE | NETSPEED | IDDCODE | AREACODE | WEATHERSTATIONCODE | WEATHERSTATIONNAME | MCC | MNC | MOBILEBRAND | ELEVATION | USAGETYPE
 
 typedef enum IP2LocationAccessType {
-	IP2LOCATION_FILE_IO,
+  IP2LOCATION_FILE_IO,
   IP2LOCATION_FILE_MMAP,
-	IP2LOCATION_SHARED_MEMORY,
+  IP2LOCATION_SHARED_MEMORY,
   IP2LOCATION_CACHE_MEMORY,
 } IP2LOCATION_ACCESS_TYPE;
 
 typedef struct {
-	char *filename;
-	FILE *filehandle;
-	uint8_t *cache;
-	IP2LMemoryMapList *mml_node;
-	IP2LOCATION_ACCESS_TYPE access_type;
-	uint8_t databasetype;
-	uint8_t databasecolumn;
-	uint8_t databaseday;
-	uint8_t databasemonth;
-	uint8_t databaseyear;
-	uint32_t databasecount;
-	uint32_t databaseaddr;
-	uint32_t ipversion;
+  char *filename;
+  FILE *filehandle;
+  uint8_t *cache;
+  IP2LMemoryMapList *mml_node;
+  IP2LOCATION_ACCESS_TYPE access_type;
+  uint8_t databasetype;
+  uint8_t databasecolumn;
+  uint8_t databaseday;
+  uint8_t databasemonth;
+  uint8_t databaseyear;
+  uint32_t databasecount;
+  uint32_t databaseaddr;
+  uint32_t ipversion;
 } IP2Location;
 
 typedef struct {
-	char *country_short;
-	char *country_long;
-	char *region;
-	char *city;
-	char *isp;
-	float latitude;
-	float longitude;
-	char *domain;
-	char *zipcode;
-	char *timezone;
-	char *netspeed;
-	char *iddcode;
-	char *areacode;
-	char *weatherstationcode;
-	char *weatherstationname;
-	char *mcc;
-	char *mnc;
-	char *mobilebrand;
-	float elevation;
-	char *usagetype;
+  char *country_short;
+  char *country_long;
+  char *region;
+  char *city;
+  char *isp;
+  float latitude;
+  float longitude;
+  char *domain;
+  char *zipcode;
+  char *timezone;
+  char *netspeed;
+  char *iddcode;
+  char *areacode;
+  char *weatherstationcode;
+  char *weatherstationname;
+  char *mcc;
+  char *mnc;
+  char *mobilebrand;
+  float elevation;
+  char *usagetype;
 } IP2LocationRecord;
 
 /* public methods */

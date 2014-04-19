@@ -46,7 +46,6 @@ IP2LMemoryMapList *IP2LocationSetupCache(FILE *filehandle, char *db) {
   return mmlnode;
 }
 
-//Description: set the DB access method as shared memory
 #ifndef WIN32
 IP2LMemoryMapList *IP2LocationSetupMMap(FILE *filehandle, char *db) {
   struct stat statbuf;
@@ -276,7 +275,6 @@ IP2LMemoryMapList *IP2LocationSetupShared(FILE *filehandle, char *shared_name) {
 #endif
 #endif
 
-//Close the corresponding memory, based on the opened option. 
 int32_t IP2LocationDBClose(FILE *filehandle, IP2LMemoryMapList *mmlnode) {
   if ( mmlnode != NULL ) {
     if ((--(mmlnode->count)) <= 0) {
@@ -345,7 +343,6 @@ uint32_t IP2LocationRead32(FILE *handle, uint8_t *cache, uint32_t position) {
   } bytes;
   bytes.u32 = 0;
   
-  //Read from file  
   if (cache == NULL) {
     fseek(handle, position-1, 0);
     fread(bytes.b8, sizeof(bytes.b8), 1, handle);
@@ -377,7 +374,7 @@ char *IP2LocationReadStr(FILE *handle, uint8_t *cache, uint32_t position) {
     str = (char *)malloc(size+1);
     fread(str, size, 1, handle);
     str[size] = 0;
-	} else {
+  } else {
     size = cache[position];
     str = (char *)malloc(size+1);
     memcpy((void*) str, (void*)&cache[position + 1], size);
