@@ -1,12 +1,16 @@
 #include <v8.h>
 #include <node.h>
 #include <string.h>
-#include "IP2Location.h"
+
+extern "C" {
+#include "ip2location.h"
+}
 
 using namespace node;
 using namespace v8;
 
 #define LOCATION_DBMODE_FILE "file"
+#define LOCATION_DBMODE_MMAP "mmap"
 #define LOCATION_DBMODE_SHARED "shared"
 #define LOCATION_DBMODE_CACHE "cache"
 #define LOCATION_DBMODE_CLOSED "closed"
@@ -55,8 +59,8 @@ class Location: public node::ObjectWrap {
       exports->Set(String::NewSymbol("Location"), constructor);
     }
 
-    Location(char *locdbpath, enum IP2Location_mem_type mtype, char *shared) {
-      iplocdb = IP2Location_open(locdbpath, mtype, shared);
+    Location(char *locdbpath, IP2LOCATION_ACCESS_TYPE mtype, char *shared) {
+      iplocdb = IP2LocationOpen(locdbpath, mtype, shared);
     }
 
     ~Location() {
@@ -65,7 +69,7 @@ class Location: public node::ObjectWrap {
 
     void Close() {
       if(iplocdb != NULL){
-        IP2Location_close(iplocdb);
+        IP2LocationClose(iplocdb);
         iplocdb = NULL;
         dbmode = LOCATION_DBMODE_CLOSED;
       }
@@ -77,7 +81,7 @@ class Location: public node::ObjectWrap {
       if (args.IsConstructCall()) {
         String::Utf8Value locdbpath(args[0]->ToString());
         Location* location;
-        enum IP2Location_mem_type mtype(IP2LOCATION_FILE_IO);
+        IP2LOCATION_ACCESS_TYPE mtype(IP2LOCATION_FILE_IO);
         const char *dbmode(LOCATION_DBMODE_FILE);
         if (args.Length() > 1) {
           char *shared = NULL;
@@ -88,6 +92,9 @@ class Location: public node::ObjectWrap {
           } else if (strncmp(*stype, LOCATION_DBMODE_CACHE, sizeof(LOCATION_DBMODE_CACHE)) == 0) {
             mtype = IP2LOCATION_CACHE_MEMORY;
             dbmode = LOCATION_DBMODE_CACHE;
+          } else if (strncmp(*stype, LOCATION_DBMODE_MMAP, sizeof(LOCATION_DBMODE_MMAP)) == 0) {
+            mtype = IP2LOCATION_FILE_MMAP;
+            dbmode = LOCATION_DBMODE_MMAP;
           } else if (strncmp(*stype, "/", 1) == 0){
             mtype = IP2LOCATION_SHARED_MEMORY;
             dbmode = LOCATION_DBMODE_SHARED;
@@ -133,8 +140,14 @@ class Location: public node::ObjectWrap {
     static Handle<Value> DeleteShared(const Arguments& args) {
       HandleScope scope;
       Location* location = ObjectWrap::Unwrap<Location>(args.This());
-      IP2Location_delete_shm(location->iplocdb);
-      return scope.Close(Undefined());
+      switch(IP2LocationDeleteShared(location->iplocdb)) {
+      case 0:
+        return scope.Close(True());
+      case -1:
+        return scope.Close(False());
+      default:
+        return scope.Close(Null());
+      }
     }
 
     static Handle<Value> GetDbInfo(const Arguments& args) {
@@ -143,17 +156,21 @@ class Location: public node::ObjectWrap {
       IP2Location *iplocdb = location->iplocdb;
       Local<Object> info = Object::New();
       if (iplocdb) {
+        info->Set(String::NewSymbol("ipversion"), Integer::New(iplocdb->ipversion));
+        info->Set(String::NewSymbol("filename"), String::New(iplocdb->filename));
         info->Set(String::NewSymbol("databasetype"), Integer::New(iplocdb->databasetype));
         info->Set(String::NewSymbol("databasecolumn"), Integer::New(iplocdb->databasecolumn));
-        info->Set(String::NewSymbol("databaseyear"), Integer::New(iplocdb->databaseyear));
         info->Set(String::NewSymbol("databaseyear"), Integer::New(iplocdb->databaseyear));
         info->Set(String::NewSymbol("databasemonth"), Integer::New(iplocdb->databasemonth));
         info->Set(String::NewSymbol("databaseday"), Integer::New(iplocdb->databaseday));
         info->Set(String::NewSymbol("databasecount"), Integer::New(iplocdb->databasecount));
         info->Set(String::NewSymbol("databaseaddr"), Integer::New(iplocdb->databaseaddr));
-        info->Set(String::NewSymbol("ipversion"), Integer::New(iplocdb->ipversion));
-        if (iplocdb->shm_node != NULL) {
-          info->Set(String::NewSymbol("shared"), String::New(iplocdb->shm_node->name));
+        if (iplocdb->mml_node != NULL) {
+          info->Set(String::NewSymbol("cacheoccupants"), Integer::New(iplocdb->mml_node->count));
+          info->Set(String::NewSymbol("cachesize"), Integer::New(iplocdb->mml_node->mem_size));
+          if (iplocdb->mml_node->type == MEMMAP_TYPE_SHARED) {
+            info->Set(String::NewSymbol("sharedname"), String::New(iplocdb->mml_node->name));
+          }
         }
         return scope.Close(info);
       } else {
@@ -170,12 +187,12 @@ class Location: public node::ObjectWrap {
       }
       Location *location = ObjectWrap::Unwrap<Location>(args.This());
       if (!location->iplocdb) {
-        ThrowException(Exception::Error(String::New("IP2LOCATION database closed")));
+        ThrowException(Exception::Error(String::New("IP2LOCATION database is closed")));
         return scope.Close(Undefined());
       }
-      IP2LocationRecord *record = IP2Location_get_mode(location->iplocdb, *ip, mode);
-      Local<Object> result = Object::New();
+      IP2LocationRecord *record = IP2LocationQuery(location->iplocdb, *ip, mode);
       if (record != NULL) {
+        Local<Object> result = Object::New();
         if (record->country_short != NULL) {
           result->Set(String::NewSymbol("country_short"), String::New(record->country_short));
         }
@@ -236,9 +253,10 @@ class Location: public node::ObjectWrap {
         if (record->usagetype != NULL) {
           result->Set(String::NewSymbol("usagetype"), String::New(record->usagetype));
         }
-        IP2Location_free_record(record);
+        IP2LocationFreeRecord(record);
+        return scope.Close(result);
       }
-      return scope.Close(result);
+      return scope.Close(False());
     }
 };
 

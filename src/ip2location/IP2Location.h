@@ -1,52 +1,14 @@
 #ifndef HAVE_IP2LOCATION_H
 #define HAVE_IP2LOCATION_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #include <stdio.h>
 #include <stdlib.h> 
-#if !defined(__APPLE__)
-#include <stdlib.h> 
-#endif
 
-#ifdef WIN32
-#define int32_t int
-#define int64_t long long int
-#endif
+#include "ip2lipaddress.h"
+#include "ip2ldatabase.h"
 
-#ifndef WIN32
-#include <stdint.h>
-#else
-
-#ifndef uint8_t
-#define uint8_t unsigned char
-#endif
-
-#ifndef int32_t 
-#define int32_t int
-#endif
-
-#ifndef int64_t
-#define int64_t long long int
-#endif
-
-#ifndef uint32_t
-#ifndef WIN32
-#define uint32_t int
-#else
-#define uint32_t unsigned int
-#endif
-#endif
-#endif
-
-#include "imath.h"
-#include "IP2Loc_DBInterface.h"
-
-#define API_VERSION   4.0.0
-#define MAX_IPV4_RANGE  4294967295U
-#define MAX_IPV6_RANGE  "340282366920938463463374607431768211455"
+#define API_VERSION     4.0.0
+#define MAX_IPV4_RANGE  0xFFFFFFFFU
 #define IPV4 0
 #define IPV6 1
 
@@ -71,23 +33,21 @@ extern "C" {
 #define  ELEVATION              0x40000
 #define  USAGETYPE              0x80000
 
-#define  ALL          COUNTRYSHORT | COUNTRYLONG | REGION | CITY | ISP | LATITUDE | LONGITUDE | DOMAIN | ZIPCODE | TIMEZONE | NETSPEED | IDDCODE | AREACODE | WEATHERSTATIONCODE | WEATHERSTATIONNAME | MCC | MNC | MOBILEBRAND | ELEVATION | USAGETYPE
+#define  ALL COUNTRYSHORT | COUNTRYLONG | REGION | CITY | ISP | LATITUDE | LONGITUDE | DOMAIN | ZIPCODE | TIMEZONE | NETSPEED | IDDCODE | AREACODE | WEATHERSTATIONCODE | WEATHERSTATIONNAME | MCC | MNC | MOBILEBRAND | ELEVATION | USAGETYPE
 
-#define  DEFAULT	     0x0001
-#define  NO_EMPTY_STRING 0x0002
-#define  NO_LEADING      0x0004
-#define  NO_TRAILING     0x0008
-
-#define INVALID_IPV6_ADDRESS "INVALID IPV6 ADDRESS"
-#define INVALID_IPV4_ADDRESS "INVALID IPV4 ADDRESS"
-// #define  NOT_SUPPORTED "This parameter is unavailable for selected data file. Please upgrade the data file."
-
+typedef enum IP2LocationAccessType {
+	IP2LOCATION_FILE_IO,
+  IP2LOCATION_FILE_MMAP,
+	IP2LOCATION_SHARED_MEMORY,
+  IP2LOCATION_CACHE_MEMORY,
+} IP2LOCATION_ACCESS_TYPE;
 
 typedef struct {
+	char *filename;
 	FILE *filehandle;
 	uint8_t *cache;
-	SharedMemList *shm_node;
-	enum IP2Location_mem_type access_type;
+	IP2LMemoryMapList *mml_node;
+	IP2LOCATION_ACCESS_TYPE access_type;
 	uint8_t databasetype;
 	uint8_t databasecolumn;
 	uint8_t databaseday;
@@ -121,41 +81,12 @@ typedef struct {
 	char *usagetype;
 } IP2LocationRecord;
 
-typedef struct StringList{
-	char* data;
-	struct StringList* next;
-} StringList;
+/* public methods */
 
-/*##################
-# Public Functions
-##################*/
-IP2Location *IP2Location_open(char *db, enum IP2Location_mem_type mtype, char *shared_name);
-uint32_t IP2Location_close(IP2Location *loc);
-IP2LocationRecord *IP2Location_get_mode(IP2Location *loc, char *ip, uint32_t mode);
-void IP2Location_free_record(IP2LocationRecord *record);
-void IP2Location_delete_shm(IP2Location *loc);
-
-/*###################
-# Private Functions
-###################*/
-
-int IP2Location_initialize(IP2Location *loc);
-IP2LocationRecord *IP2Location_new_record();
-uint32_t IP2Location_ip2no(char* ip);
-mpz_t IP2Location_ipv6_to_no(char* ip);
-int IP2Location_ip_is_ipv4 (char* ipaddr);
-int IP2Location_ip_is_ipv6 (char* ipaddr);
-IP2LocationRecord *IP2Location_get_record(IP2Location *loc, char *ip, uint32_t mode);
-IP2LocationRecord *IP2Location_get_ipv6_record(IP2Location *loc, char *ipstring, uint32_t mode);
-char* IP2Location_mp2string (mpz_t mp);
-StringList* IP2Location_split(char* delimiters, char* targetString, unsigned int flags, int limit);
-char* IP2Location_replace(char* substr, char* replace, char* targetString);
-unsigned int IP2Location_substr_count(char* substr, char* targetString);
-unsigned int StringListCount (StringList* toCount);
-void FreeStringList (StringList* toFree);
-
-#ifdef __cplusplus
-}
-#endif
+IP2Location *IP2LocationOpen(char *db, IP2LOCATION_ACCESS_TYPE mtype, char *shared_name);
+uint32_t IP2LocationClose(IP2Location *loc);
+IP2LocationRecord *IP2LocationQuery(IP2Location *loc, char *ip, uint32_t mode);
+void IP2LocationFreeRecord(IP2LocationRecord *record);
+int IP2LocationDeleteShared(IP2Location *loc);
 
 #endif
