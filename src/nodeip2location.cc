@@ -111,8 +111,9 @@ class Location: public node::ObjectWrap {
         location->Wrap(args.This());
         return args.This();
       } else {
-        const int argc = args.Length();
-        Local<Value> argv[argc];
+        int argc = args.Length();
+        if (argc > 2) argc = 2;
+        Local<Value> argv[2];
         for (int i = 0; i < argc; i++) {
           argv[i] = args[i];
         }
