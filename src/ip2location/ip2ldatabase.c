@@ -76,7 +76,7 @@ IP2LMemoryMapList *IP2LocationSetupMMap(FILE *filehandle, char *db) {
 
 IP2LMemoryMapList *IP2LocationSetupShared(FILE *filehandle, char *shared_name) {
   struct stat statbuf;
-  size_t shm_size;
+  size_t shm_size, file_size;
   SHARED_MEM_FHANDLE shm_fd;
   void *shm_shared_ptr;
   int32_t DB_loaded = 1;
@@ -106,7 +106,6 @@ IP2LMemoryMapList *IP2LocationSetupShared(FILE *filehandle, char *shared_name) {
       DB_loaded = 0;
     } else if ( ( shm_fd = shm_open(shared_name, O_RDWR , 0777) ) == -1 ) {
       return NULL;
-    } else {
     }
 
     if (DB_loaded == 0) {
@@ -116,7 +115,9 @@ IP2LMemoryMapList *IP2LocationSetupShared(FILE *filehandle, char *shared_name) {
         return NULL;
       }
 
-      if ( ftruncate(shm_fd, statbuf.st_size + 1) == -1 ) {
+      file_size = statbuf.st_size;
+
+      if ( ftruncate(shm_fd, file_size + 1) == -1 ) {
         close(shm_fd);
         shm_unlink(shared_name);
         return NULL;
@@ -140,7 +141,7 @@ IP2LMemoryMapList *IP2LocationSetupShared(FILE *filehandle, char *shared_name) {
       return NULL;
     }
     if ( DB_loaded == 0 ) {
-      if ( IP2LocationCopyDBToMemory(filehandle, shm_shared_ptr, shm_size - 1) == -1 ) {
+      if ( IP2LocationCopyDBToMemory(filehandle, shm_shared_ptr, file_size) == -1 ) {
         munmap(shm_shared_ptr, shm_size);
         close(shm_fd);
         shm_unlink(shared_name);
