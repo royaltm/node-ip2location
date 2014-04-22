@@ -19,7 +19,7 @@
 #include "ip2lmemorymaplist.h"
 #include "ip2location.h"
 
-void IP2LocationRead128Buffer(void *buffer, FILE *handle, uint8_t *cache, uint32_t position);
+void IP2LocationRead128Buffer32LE(uint32_t *buffer, FILE *handle, uint8_t *cache, uint32_t position);
 uint32_t IP2LocationRead32(FILE *handle, uint8_t *cache, uint32_t position);
 uint8_t IP2LocationRead8(FILE *handle, uint8_t *cache, uint32_t position);
 char *IP2LocationReadStr(FILE *handle, uint8_t *cache, uint32_t position);

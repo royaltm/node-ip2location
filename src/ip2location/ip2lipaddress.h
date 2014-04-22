@@ -1,7 +1,6 @@
 #ifndef WIN32
 #include <stdint.h>
 #include <sys/socket.h>
-#include <endian.h>
 #else
 #ifdef WIN32
 #include <winsock2.h>
@@ -37,13 +36,11 @@
 
 typedef struct ipv6le128 {
   union {
-    uint64_t ui64[2];
     uint32_t ui32[4];
     uint8_t ui8[16];
   };
 } ipv6le128_t;
 
-void IP2LocationIPv6LETo128(ipv6le128_t *a);
 int IP2LocationIPv6Cmp(ipv6le128_t *a, ipv6le128_t *b);
 int IP2LocationIPv6To128(char *ipaddr, ipv6le128_t *ipv6);
 int IP2LocationIP2No(char* ipaddr, uint32_t *ip);

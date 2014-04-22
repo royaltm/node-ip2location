@@ -140,10 +140,8 @@ IP2LocationRecord *IP2LocationQueryIPv6(IP2Location *loc, char *ipaddr, uint32_t
 
   while (low <= high) {
     mid = (uint32_t)((low + high)/2);
-    IP2LocationRead128Buffer((void *)&ip6from, handle, cache, baseaddr + mid * (dbcolumn * 4 + 12));
-    IP2LocationIPv6LETo128(&ip6from);
-    IP2LocationRead128Buffer((void *)&ip6to, handle, cache, baseaddr + (mid + 1) * (dbcolumn * 4 + 12));
-    IP2LocationIPv6LETo128(&ip6to);
+    IP2LocationRead128Buffer32LE(ip6from.ui32, handle, cache, baseaddr + mid * (dbcolumn * 4 + 12));
+    IP2LocationRead128Buffer32LE(ip6to.ui32, handle, cache, baseaddr + (mid + 1) * (dbcolumn * 4 + 12));
 
     if (((ipcmp = IP2LocationIPv6Cmp(&ip6no, &ip6from)) >= 0) && (IP2LocationIPv6Cmp(&ip6no, &ip6to) < 0)) {
       if ((mode & COUNTRYSHORT) && (COUNTRY_POSITION[dbtype] != 0)) {

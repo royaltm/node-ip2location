@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <sys/types.h>
 
 #ifndef WIN32
   typedef int32_t SHARED_MEM_FHANDLE;

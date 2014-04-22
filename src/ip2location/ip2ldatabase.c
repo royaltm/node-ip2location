@@ -328,29 +328,61 @@ int IP2LocationDeleteSharedMap(IP2LMemoryMapList *mmlnode) {
 #endif
 #endif
 
-void IP2LocationRead128Buffer(void *buffer, FILE *handle, uint8_t *cache, uint32_t position) {
+void IP2LocationRead128Buffer32LE(uint32_t *buffer, FILE *handle, uint8_t *cache, uint32_t position) {
+  static uint8_t filebuff[16];
+  uint8_t *bytes;
   if (cache == NULL) {
+    bytes = filebuff;
     fseek(handle, position - 1, 0);
-    fread(buffer, 16, 1, handle);
+    fread(&filebuff, sizeof(filebuff), 1, handle);
   } else {
-    memcpy(buffer, (void*)&cache[position - 1], 16);
+    bytes = &cache[position - 1];
   }
+  buffer[0] = ((uint32_t) bytes[0])  | (((uint32_t) bytes[1]) <<8) | (((uint32_t) bytes[2]) <<16) | (((uint32_t) bytes[3]) <<24);
+  buffer[1] = ((uint32_t) bytes[4])  | (((uint32_t) bytes[5]) <<8) | (((uint32_t) bytes[6]) <<16) | (((uint32_t) bytes[7]) <<24);
+  buffer[2] = ((uint32_t) bytes[8])  | (((uint32_t) bytes[9]) <<8) | (((uint32_t) bytes[10])<<16) | (((uint32_t) bytes[11])<<24);
+  buffer[3] = ((uint32_t) bytes[12]) | (((uint32_t) bytes[13])<<8) | (((uint32_t) bytes[14])<<16) | (((uint32_t) bytes[15])<<24);
 }
 
 uint32_t IP2LocationRead32(FILE *handle, uint8_t *cache, uint32_t position) {
-  union {
-    uint32_t u32;
-    uint8_t b8[4];
-  } bytes;
-  bytes.u32 = 0;
-  
+  static uint8_t filebuff[4];
+  uint8_t *bytes;
   if (cache == NULL) {
+    bytes = filebuff;
     fseek(handle, position-1, 0);
-    fread(bytes.b8, sizeof(bytes.b8), 1, handle);
+    fread(&filebuff, sizeof(filebuff), 1, handle);
   } else {
-    memcpy(bytes.b8, &cache[position - 1], sizeof(bytes.b8));
+    bytes = &cache[position - 1];
   }
-  return le32toh(bytes.u32);
+  return ((uint32_t) bytes[0]) |
+        (((uint32_t) bytes[1]) << 8)  |
+        (((uint32_t) bytes[2]) << 16) |
+        (((uint32_t) bytes[3]) << 24);
+//  return le32toh(bytes.u32);
+}
+
+float IP2LocationReadFloat(FILE *handle, uint8_t *cache, uint32_t position) {
+  static uint8_t filebuff[4];
+  uint8_t *bytes;
+  union {
+    float f32;
+    int32_t i32;
+  } ret;
+
+  if (cache == NULL) {
+    bytes = filebuff;
+    fseek(handle, position-1, 0);
+    fread(&filebuff, sizeof(filebuff), 1, handle);
+  } else {
+    bytes = &cache[position - 1];
+  }
+  ret.i32 = ((uint32_t) bytes[0]) |
+           (((uint32_t) bytes[1]) << 8)  |
+           (((uint32_t) bytes[2]) << 16) |
+           (((uint32_t) bytes[3]) << 24);
+
+  //bytes.i32 = le32toh(bytes.ui32);
+  return ret.f32;
 }
 
 uint8_t IP2LocationRead8(FILE *handle, uint8_t *cache, uint32_t position) {  
@@ -382,21 +414,4 @@ char *IP2LocationReadStr(FILE *handle, uint8_t *cache, uint32_t position) {
     str[size] = 0;
   }
   return str;
-}
-
-float IP2LocationReadFloat(FILE *handle, uint8_t *cache, uint32_t position) {
-  union {
-    float f32;
-    int32_t i32;
-  } bytes;
-  bytes.i32 = 0;
-
-  if (cache == NULL) {
-    fseek(handle, position-1, 0);
-    fread(&bytes.i32, sizeof(bytes.i32), 1, handle);
-  } else {
-    memcpy((void*) &bytes.i32, (void*)&cache[position - 1], sizeof(bytes.i32));
-  }
-  bytes.i32 = le32toh(bytes.i32);
-  return bytes.f32;
 }
