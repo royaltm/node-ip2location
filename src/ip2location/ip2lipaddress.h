@@ -1,6 +1,7 @@
 #ifndef WIN32
 #include <stdint.h>
 #include <sys/socket.h>
+#include <netinet/in.h>
 #else
 #ifdef WIN32
 #include <winsock2.h>

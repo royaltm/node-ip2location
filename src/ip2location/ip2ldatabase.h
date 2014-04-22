@@ -6,6 +6,7 @@
 #include <strings.h>
 #include <unistd.h>
 #include <sys/mman.h>
+#include <netinet/in.h>
 #endif
 
 #include <stdlib.h>
