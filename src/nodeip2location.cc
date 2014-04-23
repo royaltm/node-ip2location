@@ -54,6 +54,7 @@ class Location: public node::ObjectWrap {
       NODE_SET_PROTOTYPE_METHOD(tpl, "close", CloseDatabase);
       NODE_SET_PROTOTYPE_METHOD(tpl, "info", GetDbInfo);
       NODE_SET_PROTOTYPE_METHOD(tpl, "deleteShared", DeleteShared);
+      NODE_SET_PROTOTYPE_METHOD(tpl, "createDictionary", CreateDictionary);
 
       constructor = Persistent<Function>::New(tpl->GetFunction());
       exports->Set(String::NewSymbol("Location"), constructor);
@@ -131,7 +132,7 @@ class Location: public node::ObjectWrap {
       return location->iplocdb ? True() : False();
     }
 
-    static Handle<Value> CloseDatabase(const Arguments& args){
+    static Handle<Value> CloseDatabase(const Arguments& args) {
       HandleScope scope;
       Location* location = ObjectWrap::Unwrap<Location>(args.This());
       location->Close();
@@ -149,6 +150,32 @@ class Location: public node::ObjectWrap {
       default:
         return scope.Close(Null());
       }
+    }
+
+    static Handle<Value> CreateDictionary(const Arguments& args) {
+      HandleScope scope;
+      Location* location = ObjectWrap::Unwrap<Location>(args.This());
+      if (!location->iplocdb) {
+        ThrowException(Exception::Error(String::New("IP2LOCATION database is closed")));
+        return scope.Close(Undefined());
+      }
+      if (args.Length() < 1) {
+        ThrowException(Exception::TypeError(String::New("missing directory name")));
+        return scope.Close(Undefined());
+      }
+      String::Utf8Value dir(args[0]->ToString());
+      int ret = IP2LocationMakeDictionary(location->iplocdb, *dir);
+      if (ret < 0) {
+        switch(ret) {
+        case -1:
+          ThrowException(Exception::Error(String::New("couldn't create file or directory")));
+          return scope.Close(Undefined());
+        default:
+          ThrowException(Exception::Error(String::New("error saving dictionary")));
+          return scope.Close(Undefined());
+        }
+      }
+      return scope.Close(Number::New(ret));
     }
 
     static Handle<Value> GetDbInfo(const Arguments& args) {

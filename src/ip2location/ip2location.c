@@ -117,6 +117,79 @@ IP2LocationRecord *IP2LocationQuery(IP2Location *loc, char *ip, uint32_t mode) {
   }
 }
 
+char *IP2LocationReadRecord(IP2Location *loc, uint32_t index, uint32_t mode) {
+  uint8_t dbtype = loc->databasetype;
+  FILE *handle = loc->filehandle;
+  uint8_t *cache = loc->cache;
+  uint32_t baseaddr = loc->databaseaddr;
+  uint32_t dbcount = loc->databasecount;
+  uint32_t dbcolumn = loc->databasecolumn;
+
+  if (index > dbcount) return NULL;
+
+  if (mode & COUNTRYSHORT) {
+    if (COUNTRY_POSITION[dbtype] != 0) {
+      if (loc->ipversion == IPV6) {
+        return IP2LocationReadStr(handle, cache, IP2LocationRead32(handle, cache, baseaddr + index * (dbcolumn * 4 + 12) + 12 + 4 * (COUNTRY_POSITION[dbtype]-1)));
+      } else {
+        return IP2LocationReadStr(handle, cache, IP2LocationRead32(handle, cache, baseaddr + (index * dbcolumn * 4) + 4 * (COUNTRY_POSITION[dbtype]-1)));
+      }
+    }
+  } else if (mode & COUNTRYLONG) {
+    if (COUNTRY_POSITION[dbtype] != 0) {
+      if (loc->ipversion == IPV6) {
+        return IP2LocationReadStr(handle, cache, IP2LocationRead32(handle, cache, baseaddr + index * (dbcolumn * 4 + 12) + 12 + 4 * (COUNTRY_POSITION[dbtype]-1))+3);
+      } else {
+        return IP2LocationReadStr(handle, cache, IP2LocationRead32(handle, cache, baseaddr + (index * dbcolumn * 4) + 4 * (COUNTRY_POSITION[dbtype]-1))+3);
+      }
+    }
+  } else if (mode & REGION) {
+    if (REGION_POSITION[dbtype] != 0) {
+      if (loc->ipversion == IPV6) {
+        return IP2LocationReadStr(handle, cache, IP2LocationRead32(handle, cache, baseaddr + index * (dbcolumn * 4 + 12) + 12 + 4 * (REGION_POSITION[dbtype]-1)));
+      } else {
+        return IP2LocationReadStr(handle, cache, IP2LocationRead32(handle, cache, baseaddr + (index * dbcolumn * 4) + 4 * (REGION_POSITION[dbtype]-1)));
+      }
+    }
+  } else if (mode & CITY) {
+    if (CITY_POSITION[dbtype] != 0) {
+      if (loc->ipversion == IPV6) {
+        return IP2LocationReadStr(handle, cache, IP2LocationRead32(handle, cache, baseaddr + index * (dbcolumn * 4 + 12) + 12 + 4 * (CITY_POSITION[dbtype]-1)));
+      } else {
+        return IP2LocationReadStr(handle, cache, IP2LocationRead32(handle, cache, baseaddr + (index * dbcolumn * 4) + 4 * (CITY_POSITION[dbtype]-1)));
+      }
+    }
+  }
+  return NULL;
+}
+
+int IP2LocationMakeDictionary(IP2Location *loc, char *dir) {
+  uint32_t index, dbcount = loc->databasecount;
+  char *name = NULL;
+  IP2LDictionary *countryDict = NULL, *regionDict = NULL;
+  for (index = 0; index < dbcount; index++) {
+    if ((name = IP2LocationReadRecord(loc, index, COUNTRYSHORT)) != NULL) {
+      countryDict = IP2LFindOrAddDictionaryElement(name, NULL);
+      free(name);
+      if (countryDict != NULL) {
+        if ((name = IP2LocationReadRecord(loc, index, REGION)) != NULL) {
+          regionDict = IP2LFindOrAddDictionaryElement(name, countryDict);
+          free(name);
+          if (regionDict != NULL) {
+            if ((name = IP2LocationReadRecord(loc, index, CITY)) != NULL) {
+              IP2LFindOrAddDictionaryElement(name, regionDict);
+              free(name);
+            }
+          }
+        }
+      }
+    }
+  }
+  int ret = IP2LSaveAllDictionaries(dir);
+  IP2LFreeDictionary(NULL);
+  return ret;
+}
+
 IP2LocationRecord *IP2LocationQueryIPv6(IP2Location *loc, char *ipaddr, uint32_t mode) {
   ipv6le128_t ip6from, ip6to, ip6no;
 

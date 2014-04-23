@@ -6,6 +6,7 @@
 
 #include "ip2lipaddress.h"
 #include "ip2ldatabase.h"
+#include "ip2locationdict.h"
 
 #define API_VERSION     4.0.0
 #define MAX_IPV4_RANGE  0xFFFFFFFFU
@@ -88,5 +89,6 @@ uint32_t IP2LocationClose(IP2Location *loc);
 IP2LocationRecord *IP2LocationQuery(IP2Location *loc, char *ip, uint32_t mode);
 void IP2LocationFreeRecord(IP2LocationRecord *record);
 int IP2LocationDeleteShared(IP2Location *loc);
+int IP2LocationMakeDictionary(IP2Location *loc, char *dir);
 
 #endif
