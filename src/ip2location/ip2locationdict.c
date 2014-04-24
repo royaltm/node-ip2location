@@ -59,13 +59,14 @@ IP2LDictionary *IP2LFindOrAddDictionaryElement(char *name, IP2LDictionary *paren
 
 int IP2LSaveDictionary(IP2LDictionary *cursor, char *name) {
   int count = 0;
-  size_t nlen;
+  size_t nlen = 0;
   static char eol[1] = { '\n' };
   FILE *file = fopen(name, "w");
   if (file == NULL)
     return -1;
   while (cursor != NULL) {
-    if (fwrite(cursor->name, sizeof(char), nlen=strlen(cursor->name), file) == nlen &&
+    nlen = strlen(cursor->name);
+    if (fwrite(cursor->name, sizeof(char), nlen, file) == nlen &&
         fwrite(eol, sizeof(char), 1, file) == 1) {
       count += 1;
       cursor = cursor->next;
