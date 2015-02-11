@@ -1,9 +1,10 @@
+#include <nan.h>
 #include <v8.h>
 #include <node.h>
 #include <string.h>
 
 extern "C" {
-#include "ip2location.h"
+#  include "ip2location.h"
 }
 
 using namespace node;
@@ -15,40 +16,65 @@ using namespace v8;
 #define LOCATION_DBMODE_CACHE "cache"
 #define LOCATION_DBMODE_CLOSED "closed"
 
-class Location: public node::ObjectWrap {
+class Location: public ObjectWrap {
   public:
     IP2Location *iplocdb;
     const char *dbmode;
-    static Persistent<Function> constructor;
-    static void Init(Handle<Object> exports) {
-      Local<FunctionTemplate> tpl = FunctionTemplate::New(New);
-      tpl->SetClassName(String::NewSymbol("Location"));
+    static Persistent<FunctionTemplate> constructor;
+
+    static void Init(Handle<Object> exports)
+    {
+      Local<FunctionTemplate> tpl = NanNew<FunctionTemplate>(New);
+      NanAssignPersistent( constructor, tpl );
+      tpl->SetClassName( NanNew<String>("Location") );
+
       Local<ObjectTemplate> i_t = tpl->InstanceTemplate();
       i_t->SetInternalFieldCount(1);
-      i_t->SetAccessor(String::NewSymbol("mode"), GetDbMode);
-      i_t->SetAccessor(String::NewSymbol("opened"), GetIsOpen);
+      i_t->SetAccessor( NanNew<String>("mode"), GetDbMode );
+      i_t->SetAccessor( NanNew<String>("opened"), GetIsOpen );
 
-      tpl->Set(String::NewSymbol("COUNTRYSHORT"), Int32::New(COUNTRYSHORT), ReadOnly);
-      tpl->Set(String::NewSymbol("COUNTRYLONG"), Int32::New(COUNTRYLONG), ReadOnly);
-      tpl->Set(String::NewSymbol("REGION"), Int32::New(REGION), ReadOnly);
-      tpl->Set(String::NewSymbol("CITY"), Int32::New(CITY), ReadOnly);
-      tpl->Set(String::NewSymbol("ISP"), Int32::New(ISP), ReadOnly);
-      tpl->Set(String::NewSymbol("LATITUDE"), Int32::New(LATITUDE), ReadOnly);
-      tpl->Set(String::NewSymbol("LONGITUDE"), Int32::New(LONGITUDE), ReadOnly);
-      tpl->Set(String::NewSymbol("DOMAIN"), Int32::New(DOMAIN), ReadOnly);
-      tpl->Set(String::NewSymbol("ZIPCODE"), Int32::New(ZIPCODE), ReadOnly);
-      tpl->Set(String::NewSymbol("TIMEZONE"), Int32::New(TIMEZONE), ReadOnly);
-      tpl->Set(String::NewSymbol("NETSPEED"), Int32::New(NETSPEED), ReadOnly);
-      tpl->Set(String::NewSymbol("IDDCODE"), Int32::New(IDDCODE), ReadOnly);
-      tpl->Set(String::NewSymbol("AREACODE"), Int32::New(AREACODE), ReadOnly);
-      tpl->Set(String::NewSymbol("WEATHERSTATIONCODE"), Int32::New(WEATHERSTATIONCODE), ReadOnly);
-      tpl->Set(String::NewSymbol("WEATHERSTATIONNAME"), Int32::New(WEATHERSTATIONNAME), ReadOnly);
-      tpl->Set(String::NewSymbol("MCC"), Int32::New(MCC), ReadOnly);
-      tpl->Set(String::NewSymbol("MNC"), Int32::New(MNC), ReadOnly);
-      tpl->Set(String::NewSymbol("MOBILEBRAND"), Int32::New(MOBILEBRAND), ReadOnly);
-      tpl->Set(String::NewSymbol("ELEVATION"), Int32::New(ELEVATION), ReadOnly);
-      tpl->Set(String::NewSymbol("USAGETYPE"), Int32::New(USAGETYPE), ReadOnly);
-      tpl->Set(String::NewSymbol("ALL"), Int32::New(ALL), ReadOnly);
+      tpl->Set( NanNew<String>("COUNTRYSHORT"), NanNew<Int32>(COUNTRYSHORT),
+        static_cast<PropertyAttribute>(ReadOnly | DontDelete) );
+      tpl->Set( NanNew<String>("COUNTRYLONG"), NanNew<Int32>(COUNTRYLONG),
+        static_cast<PropertyAttribute>(ReadOnly | DontDelete) );
+      tpl->Set( NanNew<String>("REGION"), NanNew<Int32>(REGION),
+        static_cast<PropertyAttribute>(ReadOnly | DontDelete) );
+      tpl->Set( NanNew<String>("CITY"), NanNew<Int32>(CITY),
+        static_cast<PropertyAttribute>(ReadOnly | DontDelete) );
+      tpl->Set( NanNew<String>("ISP"), NanNew<Int32>(ISP),
+        static_cast<PropertyAttribute>(ReadOnly | DontDelete) );
+      tpl->Set( NanNew<String>("LATITUDE"), NanNew<Int32>(LATITUDE),
+        static_cast<PropertyAttribute>(ReadOnly | DontDelete) );
+      tpl->Set( NanNew<String>("LONGITUDE"), NanNew<Int32>(LONGITUDE),
+        static_cast<PropertyAttribute>(ReadOnly | DontDelete) );
+      tpl->Set( NanNew<String>("DOMAIN"), NanNew<Int32>(DOMAIN),
+        static_cast<PropertyAttribute>(ReadOnly | DontDelete) );
+      tpl->Set( NanNew<String>("ZIPCODE"), NanNew<Int32>(ZIPCODE),
+        static_cast<PropertyAttribute>(ReadOnly | DontDelete) );
+      tpl->Set( NanNew<String>("TIMEZONE"), NanNew<Int32>(TIMEZONE),
+        static_cast<PropertyAttribute>(ReadOnly | DontDelete) );
+      tpl->Set( NanNew<String>("NETSPEED"), NanNew<Int32>(NETSPEED),
+        static_cast<PropertyAttribute>(ReadOnly | DontDelete) );
+      tpl->Set( NanNew<String>("IDDCODE"), NanNew<Int32>(IDDCODE),
+        static_cast<PropertyAttribute>(ReadOnly | DontDelete) );
+      tpl->Set( NanNew<String>("AREACODE"), NanNew<Int32>(AREACODE),
+        static_cast<PropertyAttribute>(ReadOnly | DontDelete) );
+      tpl->Set( NanNew<String>("WEATHERSTATIONCODE"), NanNew<Int32>(WEATHERSTATIONCODE),
+        static_cast<PropertyAttribute>(ReadOnly | DontDelete) );
+      tpl->Set( NanNew<String>("WEATHERSTATIONNAME"), NanNew<Int32>(WEATHERSTATIONNAME),
+        static_cast<PropertyAttribute>(ReadOnly | DontDelete) );
+      tpl->Set( NanNew<String>("MCC"), NanNew<Int32>(MCC),
+        static_cast<PropertyAttribute>(ReadOnly | DontDelete) );
+      tpl->Set( NanNew<String>("MNC"), NanNew<Int32>(MNC),
+        static_cast<PropertyAttribute>(ReadOnly | DontDelete) );
+      tpl->Set( NanNew<String>("MOBILEBRAND"), NanNew<Int32>(MOBILEBRAND),
+        static_cast<PropertyAttribute>(ReadOnly | DontDelete) );
+      tpl->Set( NanNew<String>("ELEVATION"), NanNew<Int32>(ELEVATION),
+        static_cast<PropertyAttribute>(ReadOnly | DontDelete) );
+      tpl->Set( NanNew<String>("USAGETYPE"), NanNew<Int32>(USAGETYPE),
+        static_cast<PropertyAttribute>(ReadOnly | DontDelete) );
+      tpl->Set( NanNew<String>("ALL"), NanNew<Int32>(ALL),
+        static_cast<PropertyAttribute>(ReadOnly | DontDelete) );
 
       NODE_SET_PROTOTYPE_METHOD(tpl, "query", Query);
       NODE_SET_PROTOTYPE_METHOD(tpl, "close", CloseDatabase);
@@ -56,37 +82,40 @@ class Location: public node::ObjectWrap {
       NODE_SET_PROTOTYPE_METHOD(tpl, "deleteShared", DeleteShared);
       NODE_SET_PROTOTYPE_METHOD(tpl, "createDictionary", CreateDictionary);
 
-      constructor = Persistent<Function>::New(tpl->GetFunction());
-      exports->Set(String::NewSymbol("Location"), constructor);
+      exports->Set( NanNew<String>("Location"), NanNew<FunctionTemplate>(constructor)->GetFunction() );
     }
 
-    Location(char *locdbpath, IP2LOCATION_ACCESS_TYPE mtype, char *shared) {
+    Location(char *locdbpath, IP2LOCATION_ACCESS_TYPE mtype, char *shared)
+    {
       iplocdb = IP2LocationOpen(locdbpath, mtype, shared);
     }
 
-    ~Location() {
+    ~Location()
+    {
       Close();
     }
 
-    void Close() {
-      if(iplocdb != NULL){
+    void Close()
+    {
+      if (iplocdb != NULL) {
         IP2LocationClose(iplocdb);
         iplocdb = NULL;
         dbmode = LOCATION_DBMODE_CLOSED;
       }
     }
 
-    static Handle<Value> New(const Arguments& args) {
-      HandleScope scope;
+    static NAN_METHOD(New)
+    {
+      NanScope();
 
-      if (args.IsConstructCall()) {
-        String::Utf8Value locdbpath(args[0]->ToString());
+      if ( args.IsConstructCall() ) {
+        NanUtf8String locdbpath( args[0] );
         Location* location;
         IP2LOCATION_ACCESS_TYPE mtype(IP2LOCATION_FILE_IO);
         const char *dbmode(LOCATION_DBMODE_FILE);
         if (args.Length() > 1) {
           char *shared = NULL;
-          String::Utf8Value stype(args[1]->ToString());
+          NanUtf8String stype( args[1] );
           if (strncmp(*stype, LOCATION_DBMODE_SHARED, sizeof(LOCATION_DBMODE_SHARED)) == 0) {
             mtype = IP2LOCATION_SHARED_MEMORY;
             dbmode = LOCATION_DBMODE_SHARED;
@@ -106,11 +135,11 @@ class Location: public node::ObjectWrap {
           location = new Location(*locdbpath, mtype, NULL);
         }
         if (!location->iplocdb) {
-          ThrowException(Exception::Error(String::New("could not open IP2LOCATION database")));
+          return NanThrowError("could not open IP2LOCATION database");
         }
         location->dbmode = dbmode;
-        location->Wrap(args.This());
-        return args.This();
+        location->Wrap( args.This() );
+        NanReturnValue( args.This() );
       } else {
         int argc = args.Length();
         if (argc > 2) argc = 2;
@@ -118,177 +147,190 @@ class Location: public node::ObjectWrap {
         for (int i = 0; i < argc; i++) {
           argv[i] = args[i];
         }
-        return scope.Close(constructor->NewInstance(argc, argv));
+        NanReturnValue(
+          NanNew<FunctionTemplate>(constructor)->GetFunction()->NewInstance(argc, &argv[0]) );
       }
     }
 
-    static Handle<Value> GetDbMode(Local<String> property, const AccessorInfo& info) {
-      Location *location = ObjectWrap::Unwrap<Location>(info.This());
-      return String::New(location->dbmode);
+    static NAN_GETTER(GetDbMode)
+    {
+      NanScope();
+      Location *location = ObjectWrap::Unwrap<Location>( args.This() );
+      return NanNew<String>(location->dbmode);
     }
 
-    static Handle<Value> GetIsOpen(Local<String> property, const AccessorInfo& info) {
-      Location *location = ObjectWrap::Unwrap<Location>(info.This());
+    static NAN_GETTER(GetIsOpen)
+    {
+      Location *location = ObjectWrap::Unwrap<Location>( args.This() );
       return location->iplocdb ? True() : False();
     }
 
-    static Handle<Value> CloseDatabase(const Arguments& args) {
-      HandleScope scope;
+    static NAN_METHOD(CloseDatabase)
+    {
+      NanScope();
       Location* location = ObjectWrap::Unwrap<Location>(args.This());
       location->Close();
-      return scope.Close(Undefined());
+      NanReturnUndefined();
     }
 
-    static Handle<Value> DeleteShared(const Arguments& args) {
-      HandleScope scope;
+    static NAN_METHOD(DeleteShared)
+    {
+      NanScope();
       Location* location = ObjectWrap::Unwrap<Location>(args.This());
       switch(IP2LocationDeleteShared(location->iplocdb)) {
       case 0:
-        return scope.Close(True());
+        NanReturnValue( NanTrue() );
       case -1:
-        return scope.Close(False());
+        NanReturnValue( NanFalse() );
       default:
-        return scope.Close(Null());
+        NanReturnNull();
       }
     }
 
-    static Handle<Value> CreateDictionary(const Arguments& args) {
-      HandleScope scope;
+    static NAN_METHOD(CreateDictionary)
+    {
+      NanScope();
       Location* location = ObjectWrap::Unwrap<Location>(args.This());
       if (!location->iplocdb) {
-        ThrowException(Exception::Error(String::New("IP2LOCATION database is closed")));
-        return scope.Close(Undefined());
+        return NanThrowError("IP2LOCATION database is closed");
       }
       if (args.Length() < 1) {
-        ThrowException(Exception::TypeError(String::New("missing directory name")));
-        return scope.Close(Undefined());
+        return NanThrowTypeError("missing directory name");
       }
-      String::Utf8Value dir(args[0]->ToString());
-      int ret = IP2LocationMakeDictionary(location->iplocdb, *dir);
+      int ret = IP2LocationMakeDictionary( location->iplocdb, *NanUtf8String( args[0] ) );
       if (ret < 0) {
         switch(ret) {
-        case -1:
-          ThrowException(Exception::Error(String::New("couldn't create file or directory")));
-          return scope.Close(Undefined());
-        default:
-          ThrowException(Exception::Error(String::New("error saving dictionary")));
-          return scope.Close(Undefined());
+          case -1:
+            return NanThrowError("couldn't create file or directory");
+          default:
+            return NanThrowError("error saving dictionary");
         }
       }
-      return scope.Close(Number::New(ret));
+      NanReturnValue(NanNew<Number>(ret));
     }
 
-    static Handle<Value> GetDbInfo(const Arguments& args) {
-      HandleScope scope;
-      Location* location = ObjectWrap::Unwrap<Location>(args.This());
+    static NAN_METHOD(GetDbInfo)
+    {
+      NanScope();
+      Location* location = ObjectWrap::Unwrap<Location>( args.This() );
       IP2Location *iplocdb = location->iplocdb;
-      Local<Object> info = Object::New();
+      Local<Object> info = NanNew<Object>();
       if (iplocdb) {
-        info->Set(String::NewSymbol("ipversion"), Integer::New(iplocdb->ipversion));
-        info->Set(String::NewSymbol("filename"), String::New(iplocdb->filename));
-        info->Set(String::NewSymbol("databasetype"), Integer::New(iplocdb->databasetype));
-        info->Set(String::NewSymbol("databasecolumn"), Integer::New(iplocdb->databasecolumn));
-        info->Set(String::NewSymbol("databaseyear"), Integer::New(iplocdb->databaseyear));
-        info->Set(String::NewSymbol("databasemonth"), Integer::New(iplocdb->databasemonth));
-        info->Set(String::NewSymbol("databaseday"), Integer::New(iplocdb->databaseday));
-        info->Set(String::NewSymbol("databasecount"), Integer::New(iplocdb->databasecount));
-        info->Set(String::NewSymbol("databaseaddr"), Integer::New(iplocdb->databaseaddr));
+        info->Set( NanNew<String>("ipversion"), NanNew<Int32>(iplocdb->ipversion) );
+        info->Set( NanNew<String>("filename"), NanNew<String>(iplocdb->filename) );
+        info->Set( NanNew<String>("databasetype"), NanNew<Int32>(iplocdb->databasetype) );
+        info->Set( NanNew<String>("databasecolumn"), NanNew<Int32>(iplocdb->databasecolumn) );
+        info->Set( NanNew<String>("databaseyear"), NanNew<Int32>(iplocdb->databaseyear) );
+        info->Set( NanNew<String>("databasemonth"), NanNew<Int32>(iplocdb->databasemonth) );
+        info->Set( NanNew<String>("databaseday"), NanNew<Int32>(iplocdb->databaseday) );
+        info->Set( NanNew<String>("databasecount"), NanNew<Int32>(iplocdb->databasecount) );
+        info->Set( NanNew<String>("databaseaddr"), NanNew<Int32>(iplocdb->databaseaddr) );
         if (iplocdb->mml_node != NULL) {
-          info->Set(String::NewSymbol("cacheoccupants"), Integer::New(iplocdb->mml_node->count));
-          info->Set(String::NewSymbol("cachesize"), Integer::New(iplocdb->mml_node->mem_size));
+          info->Set(NanNew<String>("cacheoccupants"), NanNew<Int32>(iplocdb->mml_node->count));
+          info->Set(NanNew<String>("cachesize"), NanNew<Number>( (double) iplocdb->mml_node->mem_size) );
           if (iplocdb->mml_node->type == MEMMAP_TYPE_SHARED) {
-            info->Set(String::NewSymbol("sharedname"), String::New(iplocdb->mml_node->name));
+            info->Set(NanNew<String>("sharedname"), NanNew<String>(iplocdb->mml_node->name));
           }
         }
-        return scope.Close(info);
+        NanReturnValue(info);
       } else {
-        return scope.Close(Null());
+        NanReturnNull();
       }
     }
 
-    static Handle<Value> Query(const Arguments& args) {
-      HandleScope scope;
+    static NAN_METHOD(Query)
+    {
+      NanScope();
+
       uint32_t mode(ALL);
-      String::Utf8Value ip(args[0]->ToString());
+
+      if (args.Length() < 1) {
+        return NanThrowError("IP address is required");
+      }
+      NanUtf8String ip( args[0] );
+
       if (args.Length() > 1) {
         mode = args[1]->Uint32Value();
       }
-      Location *location = ObjectWrap::Unwrap<Location>(args.This());
+
+      Location *location = ObjectWrap::Unwrap<Location>( args.This() );
+
       if (!location->iplocdb) {
-        ThrowException(Exception::Error(String::New("IP2LOCATION database is closed")));
-        return scope.Close(Undefined());
+        return NanThrowError("IP2LOCATION database is closed");
       }
+
       IP2LocationRecord *record = IP2LocationQuery(location->iplocdb, *ip, mode);
-      if (record != NULL) {
-        Local<Object> result = Object::New();
+
+      if ( record != NULL ) {
+        Local<Object> result = NanNew<Object>();
         if (record->country_short != NULL) {
-          result->Set(String::NewSymbol("country_short"), String::New(record->country_short));
+          result->Set( NanNew<String>("country_short"), NanNew<String>(record->country_short) );
         }
         if (record->country_long != NULL) {
-          result->Set(String::NewSymbol("country_long"), String::New(record->country_long));
+          result->Set( NanNew<String>("country_long"), NanNew<String>(record->country_long) );
         }
         if (record->region != NULL) {
-          result->Set(String::NewSymbol("region"), String::New(record->region));
+          result->Set( NanNew<String>("region"), NanNew<String>(record->region) );
         }
         if (record->city != NULL) {
-          result->Set(String::NewSymbol("city"), String::New(record->city));
+          result->Set( NanNew<String>("city"), NanNew<String>(record->city) );
         }
         if (record->isp != NULL) {
-          result->Set(String::NewSymbol("isp"), String::New(record->isp));
+          result->Set( NanNew<String>("isp"), NanNew<String>(record->isp) );
         }
         if (mode & LATITUDE) {
-          result->Set(String::NewSymbol("latitude"), Number::New(record->latitude));
+          result->Set( NanNew<String>("latitude"), NanNew<Number>(record->latitude) );
         }
         if (mode & LONGITUDE) {
-          result->Set(String::NewSymbol("longitude"), Number::New(record->longitude));
+          result->Set( NanNew<String>("longitude"), NanNew<Number>(record->longitude) );
         }
         if (record->domain != NULL) {
-          result->Set(String::NewSymbol("domain"), String::New(record->domain));
+          result->Set( NanNew<String>("domain"), NanNew<String>(record->domain) );
         }
         if (record->zipcode != NULL) {
-          result->Set(String::NewSymbol("zipcode"), String::New(record->zipcode));
+          result->Set( NanNew<String>("zipcode"), NanNew<String>(record->zipcode) );
         }
         if (record->timezone != NULL) {
-          result->Set(String::NewSymbol("timezone"), String::New(record->timezone));
+          result->Set( NanNew<String>("timezone"), NanNew<String>(record->timezone) );
         }
         if (record->netspeed != NULL) {
-          result->Set(String::NewSymbol("netspeed"), String::New(record->netspeed));
+          result->Set( NanNew<String>("netspeed"), NanNew<String>(record->netspeed) );
         }
         if (record->iddcode != NULL) {
-          result->Set(String::NewSymbol("iddcode"), String::New(record->iddcode));
+          result->Set( NanNew<String>("iddcode"), NanNew<String>(record->iddcode) );
         }
         if (record->areacode != NULL) {
-          result->Set(String::NewSymbol("areacode"), String::New(record->areacode));
+          result->Set( NanNew<String>("areacode"), NanNew<String>(record->areacode) );
         }
         if (record->weatherstationcode != NULL) {
-          result->Set(String::NewSymbol("weatherstationcode"), String::New(record->weatherstationcode));
+          result->Set( NanNew<String>("weatherstationcode"), NanNew<String>(record->weatherstationcode) );
         }
         if (record->weatherstationname != NULL) {
-          result->Set(String::NewSymbol("weatherstationname"), String::New(record->weatherstationname));
+          result->Set( NanNew<String>("weatherstationname"), NanNew<String>(record->weatherstationname) );
         }
         if (record->mcc != NULL) {
-          result->Set(String::NewSymbol("mcc"), String::New(record->mcc));
+          result->Set( NanNew<String>("mcc"), NanNew<String>(record->mcc) );
         }
         if (record->mnc != NULL) {
-          result->Set(String::NewSymbol("mnc"), String::New(record->mnc));
+          result->Set( NanNew<String>("mnc"), NanNew<String>(record->mnc) );
         }
         if (record->mobilebrand != NULL) {
-          result->Set(String::NewSymbol("mobilebrand"), String::New(record->mobilebrand));
+          result->Set( NanNew<String>("mobilebrand"), NanNew<String>(record->mobilebrand) );
         }
         if (mode & ELEVATION) {
-          result->Set(String::NewSymbol("elevation"), Number::New(record->elevation));
+          result->Set( NanNew<String>("elevation"), NanNew<Number>(record->elevation) );
         }
         if (record->usagetype != NULL) {
-          result->Set(String::NewSymbol("usagetype"), String::New(record->usagetype));
+          result->Set( NanNew<String>("usagetype"), NanNew<String>(record->usagetype) );
         }
         IP2LocationFreeRecord(record);
-        return scope.Close(result);
+        NanReturnValue(result);
       }
-      return scope.Close(False());
+      NanReturnValue( NanFalse() );
     }
 };
 
-Persistent<Function> Location::constructor;
+Persistent<FunctionTemplate> Location::constructor;
 
 extern "C" {
   static void init(Handle<Object> exports)

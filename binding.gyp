@@ -12,8 +12,21 @@
         'src/nodeip2location.cc'
       ],
       'include_dirs': [
+        "<!(node -e \"require('nan')\")",
         'src/curl',
         'src/ip2location'
+      ],
+      'conditions': [
+        ['OS=="win"', {
+          'msvs_settings': {
+            'VCCLCompilerTool': {
+              'ExceptionHandling': 1,
+              'AdditionalOptions': [
+                '/EHsc' # ExceptionHandling=1 is not enough
+              ]
+            }
+          }
+        }]
       ]
     }
   ]
