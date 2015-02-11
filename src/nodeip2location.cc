@@ -156,13 +156,14 @@ class Location: public ObjectWrap {
     {
       NanScope();
       Location *location = ObjectWrap::Unwrap<Location>( args.This() );
-      return NanNew<String>(location->dbmode);
+      NanReturnValue( NanNew<String>(location->dbmode) );
     }
 
     static NAN_GETTER(GetIsOpen)
     {
+      NanScope();
       Location *location = ObjectWrap::Unwrap<Location>( args.This() );
-      return location->iplocdb ? True() : False();
+      NanReturnValue( NanNew<Boolean>( location->iplocdb != NULL ) );
     }
 
     static NAN_METHOD(CloseDatabase)
