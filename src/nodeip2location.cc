@@ -33,47 +33,47 @@ class Location: public ObjectWrap {
       i_t->SetAccessor( NanNew<String>("mode"), GetDbMode );
       i_t->SetAccessor( NanNew<String>("opened"), GetIsOpen );
 
-      tpl->Set( NanNew<String>("COUNTRYSHORT"), NanNew<Int32>(COUNTRYSHORT),
+      tpl->Set( NanNew<String>("COUNTRYSHORT"), NanNew<Int32>(IP2L_COUNTRYSHORT),
         static_cast<PropertyAttribute>(ReadOnly | DontDelete) );
-      tpl->Set( NanNew<String>("COUNTRYLONG"), NanNew<Int32>(COUNTRYLONG),
+      tpl->Set( NanNew<String>("COUNTRYLONG"), NanNew<Int32>(IP2L_COUNTRYLONG),
         static_cast<PropertyAttribute>(ReadOnly | DontDelete) );
-      tpl->Set( NanNew<String>("REGION"), NanNew<Int32>(REGION),
+      tpl->Set( NanNew<String>("REGION"), NanNew<Int32>(IP2L_REGION),
         static_cast<PropertyAttribute>(ReadOnly | DontDelete) );
-      tpl->Set( NanNew<String>("CITY"), NanNew<Int32>(CITY),
+      tpl->Set( NanNew<String>("CITY"), NanNew<Int32>(IP2L_CITY),
         static_cast<PropertyAttribute>(ReadOnly | DontDelete) );
-      tpl->Set( NanNew<String>("ISP"), NanNew<Int32>(ISP),
+      tpl->Set( NanNew<String>("ISP"), NanNew<Int32>(IP2L_ISP),
         static_cast<PropertyAttribute>(ReadOnly | DontDelete) );
-      tpl->Set( NanNew<String>("LATITUDE"), NanNew<Int32>(LATITUDE),
+      tpl->Set( NanNew<String>("LATITUDE"), NanNew<Int32>(IP2L_LATITUDE),
         static_cast<PropertyAttribute>(ReadOnly | DontDelete) );
-      tpl->Set( NanNew<String>("LONGITUDE"), NanNew<Int32>(LONGITUDE),
+      tpl->Set( NanNew<String>("LONGITUDE"), NanNew<Int32>(IP2L_LONGITUDE),
         static_cast<PropertyAttribute>(ReadOnly | DontDelete) );
-      tpl->Set( NanNew<String>("DOMAIN"), NanNew<Int32>(DOMAIN),
+      tpl->Set( NanNew<String>("DOMAIN"), NanNew<Int32>(IP2L_DOMAIN),
         static_cast<PropertyAttribute>(ReadOnly | DontDelete) );
-      tpl->Set( NanNew<String>("ZIPCODE"), NanNew<Int32>(ZIPCODE),
+      tpl->Set( NanNew<String>("ZIPCODE"), NanNew<Int32>(IP2L_ZIPCODE),
         static_cast<PropertyAttribute>(ReadOnly | DontDelete) );
-      tpl->Set( NanNew<String>("TIMEZONE"), NanNew<Int32>(TIMEZONE),
+      tpl->Set( NanNew<String>("TIMEZONE"), NanNew<Int32>(IP2L_TIMEZONE),
         static_cast<PropertyAttribute>(ReadOnly | DontDelete) );
-      tpl->Set( NanNew<String>("NETSPEED"), NanNew<Int32>(NETSPEED),
+      tpl->Set( NanNew<String>("NETSPEED"), NanNew<Int32>(IP2L_NETSPEED),
         static_cast<PropertyAttribute>(ReadOnly | DontDelete) );
-      tpl->Set( NanNew<String>("IDDCODE"), NanNew<Int32>(IDDCODE),
+      tpl->Set( NanNew<String>("IDDCODE"), NanNew<Int32>(IP2L_IDDCODE),
         static_cast<PropertyAttribute>(ReadOnly | DontDelete) );
-      tpl->Set( NanNew<String>("AREACODE"), NanNew<Int32>(AREACODE),
+      tpl->Set( NanNew<String>("AREACODE"), NanNew<Int32>(IP2L_AREACODE),
         static_cast<PropertyAttribute>(ReadOnly | DontDelete) );
-      tpl->Set( NanNew<String>("WEATHERSTATIONCODE"), NanNew<Int32>(WEATHERSTATIONCODE),
+      tpl->Set( NanNew<String>("WEATHERSTATIONCODE"), NanNew<Int32>(IP2L_WEATHERSTATIONCODE),
         static_cast<PropertyAttribute>(ReadOnly | DontDelete) );
-      tpl->Set( NanNew<String>("WEATHERSTATIONNAME"), NanNew<Int32>(WEATHERSTATIONNAME),
+      tpl->Set( NanNew<String>("WEATHERSTATIONNAME"), NanNew<Int32>(IP2L_WEATHERSTATIONNAME),
         static_cast<PropertyAttribute>(ReadOnly | DontDelete) );
-      tpl->Set( NanNew<String>("MCC"), NanNew<Int32>(MCC),
+      tpl->Set( NanNew<String>("MCC"), NanNew<Int32>(IP2L_MCC),
         static_cast<PropertyAttribute>(ReadOnly | DontDelete) );
-      tpl->Set( NanNew<String>("MNC"), NanNew<Int32>(MNC),
+      tpl->Set( NanNew<String>("MNC"), NanNew<Int32>(IP2L_MNC),
         static_cast<PropertyAttribute>(ReadOnly | DontDelete) );
-      tpl->Set( NanNew<String>("MOBILEBRAND"), NanNew<Int32>(MOBILEBRAND),
+      tpl->Set( NanNew<String>("MOBILEBRAND"), NanNew<Int32>(IP2L_MOBILEBRAND),
         static_cast<PropertyAttribute>(ReadOnly | DontDelete) );
-      tpl->Set( NanNew<String>("ELEVATION"), NanNew<Int32>(ELEVATION),
+      tpl->Set( NanNew<String>("ELEVATION"), NanNew<Int32>(IP2L_ELEVATION),
         static_cast<PropertyAttribute>(ReadOnly | DontDelete) );
-      tpl->Set( NanNew<String>("USAGETYPE"), NanNew<Int32>(USAGETYPE),
+      tpl->Set( NanNew<String>("USAGETYPE"), NanNew<Int32>(IP2L_USAGETYPE),
         static_cast<PropertyAttribute>(ReadOnly | DontDelete) );
-      tpl->Set( NanNew<String>("ALL"), NanNew<Int32>(ALL),
+      tpl->Set( NanNew<String>("ALL"), NanNew<Int32>(IP2L_ALL),
         static_cast<PropertyAttribute>(ReadOnly | DontDelete) );
 
       NODE_SET_PROTOTYPE_METHOD(tpl, "query", Query);
@@ -81,6 +81,7 @@ class Location: public ObjectWrap {
       NODE_SET_PROTOTYPE_METHOD(tpl, "info", GetDbInfo);
       NODE_SET_PROTOTYPE_METHOD(tpl, "deleteShared", DeleteShared);
       NODE_SET_PROTOTYPE_METHOD(tpl, "createDictionary", CreateDictionary);
+      NODE_SET_PROTOTYPE_METHOD(tpl, "createISPDictionary", CreateSimpleDictionary);
 
       exports->Set( NanNew<String>("Location"), NanNew<FunctionTemplate>(constructor)->GetFunction() );
     }
@@ -210,6 +211,28 @@ class Location: public ObjectWrap {
       NanReturnValue(NanNew<Number>(ret));
     }
 
+    static NAN_METHOD(CreateSimpleDictionary)
+    {
+      NanScope();
+      Location* location = ObjectWrap::Unwrap<Location>(args.This());
+      if (!location->iplocdb) {
+        return NanThrowError("IP2LOCATION database is closed");
+      }
+      if (args.Length() < 1) {
+        return NanThrowTypeError("missing directory name");
+      }
+      int ret = IP2LocationMakeSimpleDictionary(location->iplocdb, *NanUtf8String( args[0] ), IP2L_ISP);
+      if (ret < 0) {
+        switch(ret) {
+        case -1:
+          return NanThrowError("couldn't create file");
+        default:
+          return NanThrowError("error saving dictionary");
+        }
+      }
+      NanReturnValue(NanNew<Number>(ret));
+    }
+
     static NAN_METHOD(GetDbInfo)
     {
       NanScope();
@@ -243,7 +266,7 @@ class Location: public ObjectWrap {
     {
       NanScope();
 
-      uint32_t mode(ALL);
+      uint32_t mode(IP2L_ALL);
 
       if (args.Length() < 1) {
         return NanThrowError("IP address is required");
@@ -279,10 +302,10 @@ class Location: public ObjectWrap {
         if (record->isp != NULL) {
           result->Set( NanNew<String>("isp"), NanNew<String>(record->isp) );
         }
-        if (mode & LATITUDE) {
+        if (mode & IP2L_LATITUDE) {
           result->Set( NanNew<String>("latitude"), NanNew<Number>(record->latitude) );
         }
-        if (mode & LONGITUDE) {
+        if (mode & IP2L_LONGITUDE) {
           result->Set( NanNew<String>("longitude"), NanNew<Number>(record->longitude) );
         }
         if (record->domain != NULL) {
@@ -318,7 +341,7 @@ class Location: public ObjectWrap {
         if (record->mobilebrand != NULL) {
           result->Set( NanNew<String>("mobilebrand"), NanNew<String>(record->mobilebrand) );
         }
-        if (mode & ELEVATION) {
+        if (mode & IP2L_ELEVATION) {
           result->Set( NanNew<String>("elevation"), NanNew<Number>(record->elevation) );
         }
         if (record->usagetype != NULL) {

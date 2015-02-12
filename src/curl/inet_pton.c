@@ -23,7 +23,11 @@
 // #endif
 // #ifdef HAVE_SYS_SOCKET_H
 #ifndef WIN32
-#include <sys/socket.h>
+#  include <sys/socket.h>
+#else
+#ifdef WIN32
+#  include <Winsock2.h>
+#endif
 #endif
 // #endif
 // #ifdef HAVE_NETINET_IN_H
@@ -212,7 +216,7 @@ inet_pton6(const char *src, unsigned char *dst)
      * Since some memmove()'s erroneously fail to handle
      * overlapping regions, we'll do the shift by hand.
      */
-    const long n = tp - colonp;
+    const long n = (long)(tp - colonp);
     long i;
 
     if(tp == endp)

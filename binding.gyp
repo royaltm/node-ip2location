@@ -25,7 +25,10 @@
                 '/EHsc' # ExceptionHandling=1 is not enough
               ]
             }
-          }
+          },
+          'libraries': [
+            '-lWs2_32.lib',
+          ]
         }]
       ]
     }

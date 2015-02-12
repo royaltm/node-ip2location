@@ -1,9 +1,26 @@
 #include "ip2ldatabase.h"
 
+#ifndef WIN32
+#include <unistd.h>
+#include <sys/mman.h>
+#include <netinet/in.h>
+#else
+#ifdef WIN32
+#  include <windows.h>
+#  include <io.h>
+#endif
+#endif
+
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <string.h>
+#include <fcntl.h>
+#include <errno.h>
+
 #define IP2LOCATION_SHM_DEFAULT "/IP2location_Shm"
 #define MAP_ADDR 0xFA030000
 
-int32_t IP2LocationCopyDBToMemory(FILE *filehandle, void *memory, size_t size) {
+static int IP2LocationCopyDBToMemory(FILE *filehandle, void *memory, size_t size) {
   fseek(filehandle, SEEK_SET, 0);
   if ( fread(memory, size, 1, filehandle) != 1 )
     return -1;
@@ -79,7 +96,7 @@ IP2LMemoryMapList *IP2LocationSetupShared(FILE *filehandle, char *shared_name) {
   size_t shm_size, file_size = 0;
   SHARED_MEM_FHANDLE shm_fd;
   void *shm_shared_ptr;
-  int32_t DB_loaded = 1;
+  int DB_loaded = 1;
 
   if (shared_name == NULL) {
     shared_name = IP2LOCATION_SHM_DEFAULT;
@@ -162,6 +179,7 @@ IP2LMemoryMapList *IP2LocationSetupShared(FILE *filehandle, char *shared_name) {
 IP2LMemoryMapList *IP2LocationSetupMMap(FILE *filehandle, char *db) {
   struct stat statbuf;
   SHARED_MEM_FHANDLE shm_fd;
+  HANDLE wfilehandle = (HANDLE)_get_osfhandle( fileno(filehandle) );
   void *mem_ptr;
   size_t mem_size;
 
@@ -174,15 +192,16 @@ IP2LMemoryMapList *IP2LocationSetupMMap(FILE *filehandle, char *db) {
       return NULL;
     }
 
-    mem_size = statbuf.st_size + 1;
+    mem_size = statbuf.st_size;
 
     shm_fd = CreateFileMapping(
-                   filehandle,
+                   wfilehandle,
                    NULL,
                    PAGE_READONLY,
                    0,
-                   mem_size,
+                   0,
                    NULL);
+
     if (shm_fd == NULL) {
       return NULL;
     }
@@ -198,14 +217,12 @@ IP2LMemoryMapList *IP2LocationSetupMMap(FILE *filehandle, char *db) {
       CloseHandle(shm_fd);
       return NULL;
     }
-    
+
     mmlnode = IP2LCreateMemoryMapNode(db, MEMMAP_TYPE_FILE);
     mmlnode->mem_ptr = mem_ptr;
     mmlnode->mem_size = mem_size;
     mmlnode->shm_fd = shm_fd;
     mmlnode->count = 1;
-  } else {
-    mmlnode->count++;
   }
   return mmlnode;
 }
@@ -215,13 +232,14 @@ IP2LMemoryMapList *IP2LocationSetupShared(FILE *filehandle, char *shared_name) {
   SHARED_MEM_FHANDLE shm_fd;
   void *shm_shared_ptr;
   size_t shm_size;
-  int32_t DB_loaded = 1;
+  int DB_loaded = 1;
+  IP2LMemoryMapList *mmlnode;
 
   if (shared_name == NULL) {
     shared_name = IP2LOCATION_SHM_DEFAULT;
   }
 
-  IP2LMemoryMapList *mmlnode = IP2LFindMemoryMapNode(shared_name, MEMMAP_TYPE_SHARED);
+  mmlnode = IP2LFindMemoryMapNode(shared_name, MEMMAP_TYPE_SHARED);
 
   if (mmlnode != NULL) {
     mmlnode->count++;
@@ -237,7 +255,7 @@ IP2LMemoryMapList *IP2LocationSetupShared(FILE *filehandle, char *shared_name) {
                    NULL,
                    PAGE_READWRITE,
                    0,
-                   shm_size,
+                   (DWORD) shm_size,
                    TEXT(shared_name));
     if (shm_fd == NULL) {
       return NULL;
@@ -273,16 +291,16 @@ IP2LMemoryMapList *IP2LocationSetupShared(FILE *filehandle, char *shared_name) {
   }
   return mmlnode;
 }
-#endif
+#endif /* WIN32 */
 #endif
 
-int32_t IP2LocationDBClose(FILE *filehandle, IP2LMemoryMapList *mmlnode) {
+void IP2LocationDBClose(FILE *filehandle, IP2LMemoryMapList *mmlnode) {
   if ( mmlnode != NULL ) {
     if ((--(mmlnode->count)) <= 0) {
       if (mmlnode->type == MEMMAP_TYPE_NONE) {
         free(mmlnode->mem_ptr);
       } else {
-#ifndef  WIN32
+#ifndef WIN32
         munmap(mmlnode->mem_ptr, mmlnode->mem_size);
         if (mmlnode->type == MEMMAP_TYPE_SHARED)
           close(mmlnode->shm_fd);
@@ -299,8 +317,6 @@ int32_t IP2LocationDBClose(FILE *filehandle, IP2LMemoryMapList *mmlnode) {
   if ( filehandle != NULL ) {
     fclose(filehandle);
   }
-
-  return 0;
 }
 
 #ifndef  WIN32

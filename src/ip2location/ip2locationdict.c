@@ -1,11 +1,16 @@
+#include "ip2locationdict.h"
+
 #include <stdlib.h>
 #include <stdio.h>
-#include <ctype.h>
-#include <string.h>
 #include <sys/types.h>
+#include <string.h>
 #include <sys/stat.h>
 #include <errno.h>
-#include "ip2locationdict.h"
+
+#ifdef _MSC_VER
+#  include <direct.h>
+#  define mkdir(pathname, _) _mkdir(pathname)
+#endif
 
 static IP2LDictionary *dict_root = NULL;
 
@@ -21,12 +26,17 @@ IP2LDictionary *IP2LCreateDictionaryElement(char *name, unsigned int level) {
   dict->level = level;
   return dict;
 }
+
 IP2LDictionary *IP2LFindOrAddDictionaryElement(char *name, IP2LDictionary *parent) {
-  if (name[0] == '-') return NULL;
   IP2LDictionary *cursor, *found = NULL;
-  size_t nlen = strlen(name);
+  size_t nlen;
   unsigned int level;
   int res = 1;
+
+  if (name[0] == '-') return NULL;
+
+  nlen = strlen(name);
+
   if (parent != NULL) {
     cursor = parent->child;
     level = parent->level + 1;
@@ -60,7 +70,7 @@ IP2LDictionary *IP2LFindOrAddDictionaryElement(char *name, IP2LDictionary *paren
 int IP2LSaveDictionary(IP2LDictionary *cursor, char *name) {
   int count = 0;
   size_t nlen = 0;
-  static char eol[1] = { '\n' };
+  static const char eol[1] = { '\n' };
   FILE *file = fopen(name, "w");
   if (file == NULL)
     return -1;

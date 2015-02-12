@@ -1,4 +1,5 @@
 #include "ip2location.h"
+#include <string.h>
 
 uint8_t COUNTRY_POSITION[25]             = {0, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2};
 uint8_t REGION_POSITION[25]              = {0, 0, 0, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3};
@@ -81,12 +82,11 @@ IP2Location *IP2LocationOpen(char *db, IP2LOCATION_ACCESS_TYPE mtype, char *shar
   return loc;
 }
 
-uint32_t IP2LocationClose(IP2Location *loc) {
+void IP2LocationClose(IP2Location *loc) {
   if (loc != NULL) {
     IP2LocationDBClose(loc->filehandle, loc->mml_node);
     IP2LocationFree(loc);
   }
-  return 0;
 }
 
 int IP2LocationDeleteShared(IP2Location *loc) {
@@ -110,11 +110,53 @@ int IP2LocationInit(IP2Location *loc) {
 }
 
 IP2LocationRecord *IP2LocationQuery(IP2Location *loc, char *ip, uint32_t mode) {
-  if (loc->ipversion == IPV6) {
+  if (loc->ipversion == IP2L_IPV6) {
     return IP2LocationQueryIPv6(loc, ip, mode);
   } else {
     return IP2LocationQueryIPv4(loc, ip, mode);
   }
+}
+
+int IP2LocationMakeSimpleDictionary(IP2Location *loc, const char *filename, uint32_t mode) {
+  uint8_t dbtype = loc->databasetype;
+  FILE *handle = loc->filehandle;
+  uint8_t *cache = loc->cache;
+  uint32_t baseaddr = loc->databaseaddr;
+  uint32_t dbcount = loc->databasecount;
+  uint32_t dbcolumn = loc->databasecolumn;
+
+  uint32_t min = 0xFFFFFFFFU, max = 0, index, value;
+
+  for (index = 0; index < dbcount; ++index) {
+    if ((mode & IP2L_ISP) && (ISP_POSITION[dbtype] != 0)) {
+      if (loc->ipversion == IP2L_IPV6) {
+        value = IP2LocationRead32(handle, cache, baseaddr + index * (dbcolumn * 4 + 12) + 12 + 4 * (ISP_POSITION[dbtype]-1));
+      } else {
+        value = IP2LocationRead32(handle, cache, baseaddr + (index * dbcolumn * 4) + 4 * (ISP_POSITION[dbtype]-1));
+      }
+      if (value > max) max = value;
+      if (value < min) min = value;
+    }
+  }
+
+  if (min <= max) {
+    FILE *file = fopen(filename, "w");
+    value = 0;
+    if (file == NULL)
+      return -1;
+
+    for(index = min; index <= max; ++value) {
+      const char *name = IP2LocationReadStr(handle, cache, index);
+      index += strlen(name) + 1;
+      fprintf(file, "%s\n", name);
+      free((void *)name);
+    }
+
+    fclose(file);
+    return value;
+  }
+
+  return -2;
 }
 
 char *IP2LocationReadRecord(IP2Location *loc, uint32_t index, uint32_t mode) {
@@ -127,33 +169,33 @@ char *IP2LocationReadRecord(IP2Location *loc, uint32_t index, uint32_t mode) {
 
   if (index > dbcount) return NULL;
 
-  if (mode & COUNTRYSHORT) {
+  if (mode & IP2L_COUNTRYSHORT) {
     if (COUNTRY_POSITION[dbtype] != 0) {
-      if (loc->ipversion == IPV6) {
+      if (loc->ipversion == IP2L_IPV6) {
         return IP2LocationReadStr(handle, cache, IP2LocationRead32(handle, cache, baseaddr + index * (dbcolumn * 4 + 12) + 12 + 4 * (COUNTRY_POSITION[dbtype]-1)));
       } else {
         return IP2LocationReadStr(handle, cache, IP2LocationRead32(handle, cache, baseaddr + (index * dbcolumn * 4) + 4 * (COUNTRY_POSITION[dbtype]-1)));
       }
     }
-  } else if (mode & COUNTRYLONG) {
+  } else if (mode & IP2L_COUNTRYLONG) {
     if (COUNTRY_POSITION[dbtype] != 0) {
-      if (loc->ipversion == IPV6) {
+      if (loc->ipversion == IP2L_IPV6) {
         return IP2LocationReadStr(handle, cache, IP2LocationRead32(handle, cache, baseaddr + index * (dbcolumn * 4 + 12) + 12 + 4 * (COUNTRY_POSITION[dbtype]-1))+3);
       } else {
         return IP2LocationReadStr(handle, cache, IP2LocationRead32(handle, cache, baseaddr + (index * dbcolumn * 4) + 4 * (COUNTRY_POSITION[dbtype]-1))+3);
       }
     }
-  } else if (mode & REGION) {
+  } else if (mode & IP2L_REGION) {
     if (REGION_POSITION[dbtype] != 0) {
-      if (loc->ipversion == IPV6) {
+      if (loc->ipversion == IP2L_IPV6) {
         return IP2LocationReadStr(handle, cache, IP2LocationRead32(handle, cache, baseaddr + index * (dbcolumn * 4 + 12) + 12 + 4 * (REGION_POSITION[dbtype]-1)));
       } else {
         return IP2LocationReadStr(handle, cache, IP2LocationRead32(handle, cache, baseaddr + (index * dbcolumn * 4) + 4 * (REGION_POSITION[dbtype]-1)));
       }
     }
-  } else if (mode & CITY) {
+  } else if (mode & IP2L_CITY) {
     if (CITY_POSITION[dbtype] != 0) {
-      if (loc->ipversion == IPV6) {
+      if (loc->ipversion == IP2L_IPV6) {
         return IP2LocationReadStr(handle, cache, IP2LocationRead32(handle, cache, baseaddr + index * (dbcolumn * 4 + 12) + 12 + 4 * (CITY_POSITION[dbtype]-1)));
       } else {
         return IP2LocationReadStr(handle, cache, IP2LocationRead32(handle, cache, baseaddr + (index * dbcolumn * 4) + 4 * (CITY_POSITION[dbtype]-1)));
@@ -168,15 +210,15 @@ int IP2LocationMakeDictionary(IP2Location *loc, char *dir) {
   char *name = NULL;
   IP2LDictionary *countryDict = NULL, *regionDict = NULL;
   for (index = 0; index < dbcount; index++) {
-    if ((name = IP2LocationReadRecord(loc, index, COUNTRYSHORT)) != NULL) {
+    if ((name = IP2LocationReadRecord(loc, index, IP2L_COUNTRYSHORT)) != NULL) {
       countryDict = IP2LFindOrAddDictionaryElement(name, NULL);
       free(name);
       if (countryDict != NULL) {
-        if ((name = IP2LocationReadRecord(loc, index, REGION)) != NULL) {
+        if ((name = IP2LocationReadRecord(loc, index, IP2L_REGION)) != NULL) {
           regionDict = IP2LFindOrAddDictionaryElement(name, countryDict);
           free(name);
           if (regionDict != NULL) {
-            if ((name = IP2LocationReadRecord(loc, index, CITY)) != NULL) {
+            if ((name = IP2LocationReadRecord(loc, index, IP2L_CITY)) != NULL) {
               IP2LFindOrAddDictionaryElement(name, regionDict);
               free(name);
             }
@@ -185,17 +227,16 @@ int IP2LocationMakeDictionary(IP2Location *loc, char *dir) {
       }
     }
   }
-  int ret = IP2LSaveAllDictionaries(dir);
-  IP2LFreeDictionary(NULL);
-  return ret;
+  {
+    int ret = IP2LSaveAllDictionaries(dir);
+    IP2LFreeDictionary(NULL);
+    return ret;
+  }
 }
 
 IP2LocationRecord *IP2LocationQueryIPv6(IP2Location *loc, char *ipaddr, uint32_t mode) {
   ipv6le128_t ip6from, ip6to, ip6no;
-
-  if (IP2LocationIPv6To128(ipaddr, &ip6no) != 1) {
-    return NULL;
-  }
+  IP2LocationRecord *record;
 
   uint8_t dbtype = loc->databasetype;
   FILE *handle = loc->filehandle;
@@ -209,7 +250,11 @@ IP2LocationRecord *IP2LocationQueryIPv6(IP2Location *loc, char *ipaddr, uint32_t
   uint32_t mid = 0;
   int ipcmp;
 
-  IP2LocationRecord *record = IP2LocationCreateRecord();
+  if (IP2LocationIPv6To128(ipaddr, &ip6no) != 1) {
+    return NULL;
+  }
+
+  record = IP2LocationCreateRecord();
 
   while (low <= high) {
     mid = (uint32_t)((low + high)/2);
@@ -217,121 +262,121 @@ IP2LocationRecord *IP2LocationQueryIPv6(IP2Location *loc, char *ipaddr, uint32_t
     IP2LocationRead128Buffer32LE(ip6to.ui32, handle, cache, baseaddr + (mid + 1) * (dbcolumn * 4 + 12));
 
     if (((ipcmp = IP2LocationIPv6Cmp(&ip6no, &ip6from)) >= 0) && (IP2LocationIPv6Cmp(&ip6no, &ip6to) < 0)) {
-      if ((mode & COUNTRYSHORT) && (COUNTRY_POSITION[dbtype] != 0)) {
+      if ((mode & IP2L_COUNTRYSHORT) && (COUNTRY_POSITION[dbtype] != 0)) {
         record->country_short = IP2LocationReadStr(handle, cache, IP2LocationRead32(handle, cache, baseaddr + mid * (dbcolumn * 4 + 12) + 12 + 4 * (COUNTRY_POSITION[dbtype]-1)));
       } else {
         record->country_short = NULL;
       }
 
-      if ((mode & COUNTRYLONG) && (COUNTRY_POSITION[dbtype] != 0)) {
+      if ((mode & IP2L_COUNTRYLONG) && (COUNTRY_POSITION[dbtype] != 0)) {
         record->country_long = IP2LocationReadStr(handle, cache, IP2LocationRead32(handle, cache, baseaddr + mid * (dbcolumn * 4 + 12) + 12 + 4 * (COUNTRY_POSITION[dbtype]-1))+3);
       } else {
         record->country_long = NULL;
       }
 
-      if ((mode & REGION) && (REGION_POSITION[dbtype] != 0)) {
+      if ((mode & IP2L_REGION) && (REGION_POSITION[dbtype] != 0)) {
         record->region = IP2LocationReadStr(handle, cache, IP2LocationRead32(handle, cache, baseaddr + mid * (dbcolumn * 4 + 12) + 12 + 4 * (REGION_POSITION[dbtype]-1)));
       } else {
         record->region = NULL;
       }
 
-      if ((mode & CITY) && (CITY_POSITION[dbtype] != 0)) {
+      if ((mode & IP2L_CITY) && (CITY_POSITION[dbtype] != 0)) {
         record->city = IP2LocationReadStr(handle, cache, IP2LocationRead32(handle, cache, baseaddr + mid * (dbcolumn * 4 + 12) + 12 + 4 * (CITY_POSITION[dbtype]-1)));
       } else {
         record->city = NULL;
       }
 
-      if ((mode & ISP) && (ISP_POSITION[dbtype] != 0)) {
+      if ((mode & IP2L_ISP) && (ISP_POSITION[dbtype] != 0)) {
         record->isp = IP2LocationReadStr(handle, cache, IP2LocationRead32(handle, cache, baseaddr + mid * (dbcolumn * 4 + 12) + 12 + 4 * (ISP_POSITION[dbtype]-1)));
       } else {
         record->isp = NULL;
       }
 
-      if ((mode & LATITUDE) && (LATITUDE_POSITION[dbtype] != 0)) {
+      if ((mode & IP2L_LATITUDE) && (LATITUDE_POSITION[dbtype] != 0)) {
         record->latitude = IP2LocationReadFloat(handle, cache, baseaddr + mid * (dbcolumn * 4 + 12) + 12 + 4 * (LATITUDE_POSITION[dbtype]-1));
       } else {
         record->latitude = 0.0;
       }
 
-      if ((mode & LONGITUDE) && (LONGITUDE_POSITION[dbtype] != 0)) {
+      if ((mode & IP2L_LONGITUDE) && (LONGITUDE_POSITION[dbtype] != 0)) {
         record->longitude = IP2LocationReadFloat(handle, cache, baseaddr + mid * (dbcolumn * 4 + 12) + 12 + 4 * (LONGITUDE_POSITION[dbtype]-1));
       } else {
         record->longitude = 0.0;
       }
 
-      if ((mode & DOMAIN) && (DOMAIN_POSITION[dbtype] != 0)) {
+      if ((mode & IP2L_DOMAIN) && (DOMAIN_POSITION[dbtype] != 0)) {
         record->domain = IP2LocationReadStr(handle, cache, IP2LocationRead32(handle, cache, baseaddr + mid * (dbcolumn * 4 + 12) + 12 + 4 * (DOMAIN_POSITION[dbtype]-1)));
       } else {
         record->domain = NULL;
       }
 
-      if ((mode & ZIPCODE) && (ZIPCODE_POSITION[dbtype] != 0)) {
+      if ((mode & IP2L_ZIPCODE) && (ZIPCODE_POSITION[dbtype] != 0)) {
         record->zipcode = IP2LocationReadStr(handle, cache, IP2LocationRead32(handle, cache, baseaddr + mid * (dbcolumn * 4 + 12) + 12 + 4 * (ZIPCODE_POSITION[dbtype]-1)));
       } else {
         record->zipcode = NULL;
       }
 
-      if ((mode & TIMEZONE) && (TIMEZONE_POSITION[dbtype] != 0)) {
+      if ((mode & IP2L_TIMEZONE) && (TIMEZONE_POSITION[dbtype] != 0)) {
         record->timezone = IP2LocationReadStr(handle, cache, IP2LocationRead32(handle, cache, baseaddr + mid * (dbcolumn * 4 + 12) + 12 + 4 * (TIMEZONE_POSITION[dbtype]-1)));
       } else {
         record->timezone = NULL;
       }
 
-      if ((mode & NETSPEED) && (NETSPEED_POSITION[dbtype] != 0)) {
+      if ((mode & IP2L_NETSPEED) && (NETSPEED_POSITION[dbtype] != 0)) {
         record->netspeed = IP2LocationReadStr(handle, cache, IP2LocationRead32(handle, cache, baseaddr + mid * (dbcolumn * 4 + 12) + 12 + 4 * (NETSPEED_POSITION[dbtype]-1)));
       } else {
         record->netspeed = NULL;
       }
 
-      if ((mode & IDDCODE) && (IDDCODE_POSITION[dbtype] != 0)) {
+      if ((mode & IP2L_IDDCODE) && (IDDCODE_POSITION[dbtype] != 0)) {
         record->iddcode = IP2LocationReadStr(handle, cache, IP2LocationRead32(handle, cache, baseaddr + mid * (dbcolumn * 4 + 12) + 12 + 4 * (IDDCODE_POSITION[dbtype]-1)));
       } else {
         record->iddcode = NULL;
       }
 
-      if ((mode & AREACODE) && (AREACODE_POSITION[dbtype] != 0)) {
+      if ((mode & IP2L_AREACODE) && (AREACODE_POSITION[dbtype] != 0)) {
         record->areacode = IP2LocationReadStr(handle, cache, IP2LocationRead32(handle, cache, baseaddr + mid * (dbcolumn * 4 + 12) + 12 + 4 * (AREACODE_POSITION[dbtype]-1)));
       } else {
         record->areacode = NULL;
       }
 
-      if ((mode & WEATHERSTATIONCODE) && (WEATHERSTATIONCODE_POSITION[dbtype] != 0)) {
+      if ((mode & IP2L_WEATHERSTATIONCODE) && (WEATHERSTATIONCODE_POSITION[dbtype] != 0)) {
         record->weatherstationcode = IP2LocationReadStr(handle, cache, IP2LocationRead32(handle, cache, baseaddr + mid * (dbcolumn * 4 + 12) + 12 + 4 * (WEATHERSTATIONCODE_POSITION[dbtype]-1)));
       } else {
         record->weatherstationcode = NULL;
       }
 
-      if ((mode & WEATHERSTATIONNAME) && (WEATHERSTATIONNAME_POSITION[dbtype] != 0)) {
+      if ((mode & IP2L_WEATHERSTATIONNAME) && (WEATHERSTATIONNAME_POSITION[dbtype] != 0)) {
         record->weatherstationname = IP2LocationReadStr(handle, cache, IP2LocationRead32(handle, cache, baseaddr + mid * (dbcolumn * 4 + 12) + 12 + 4 * (WEATHERSTATIONNAME_POSITION[dbtype]-1)));
       } else {
         record->weatherstationname = NULL;
       }
 
-      if ((mode & MCC) && (MCC_POSITION[dbtype] != 0)) {
+      if ((mode & IP2L_MCC) && (MCC_POSITION[dbtype] != 0)) {
         record->mcc = IP2LocationReadStr(handle, cache, IP2LocationRead32(handle, cache, baseaddr + mid * (dbcolumn * 4 + 12) + 12 + 4 * (MCC_POSITION[dbtype]-1)));
       } else {
         record->mcc = NULL;
       }
 
-      if ((mode & MNC) && (MNC_POSITION[dbtype] != 0)) {
+      if ((mode & IP2L_MNC) && (MNC_POSITION[dbtype] != 0)) {
         record->mnc = IP2LocationReadStr(handle, cache, IP2LocationRead32(handle, cache, baseaddr + mid * (dbcolumn * 4 + 12) + 12 + 4 * (MNC_POSITION[dbtype]-1)));
       } else {
         record->mnc = NULL;
       }
 
-      if ((mode & MOBILEBRAND) && (MOBILEBRAND_POSITION[dbtype] != 0)) {
+      if ((mode & IP2L_MOBILEBRAND) && (MOBILEBRAND_POSITION[dbtype] != 0)) {
         record->mobilebrand = IP2LocationReadStr(handle, cache, IP2LocationRead32(handle, cache, baseaddr + mid * (dbcolumn * 4 + 12) + 12 + 4 * (MOBILEBRAND_POSITION[dbtype]-1)));
       } else {
         record->mobilebrand = NULL;
       }
 
-      if ((mode & ELEVATION) && (ELEVATION_POSITION[dbtype] != 0)) {
+      if ((mode & IP2L_ELEVATION) && (ELEVATION_POSITION[dbtype] != 0)) {
         record->elevation = IP2LocationReadFloat(handle, cache, baseaddr + mid * (dbcolumn * 4 + 12) + 12 + 4 * (ELEVATION_POSITION[dbtype]-1));
       } else {
         record->elevation = 0.0;
       }
 
-      if ((mode & USAGETYPE) && (USAGETYPE_POSITION[dbtype] != 0)) {
+      if ((mode & IP2L_USAGETYPE) && (USAGETYPE_POSITION[dbtype] != 0)) {
         record->usagetype = IP2LocationReadStr(handle, cache, IP2LocationRead32(handle, cache, baseaddr + mid * (dbcolumn * 4 + 12) + 12 + 4 * (USAGETYPE_POSITION[dbtype]-1)));
       } else {
         record->usagetype = NULL;
@@ -373,9 +418,6 @@ IP2LocationRecord *IP2LocationQueryIPv6(IP2Location *loc, char *ipaddr, uint32_t
 
 IP2LocationRecord *IP2LocationQueryIPv4(IP2Location *loc, char *ipaddr, uint32_t mode) {
   uint32_t ipno;
-  if (IP2LocationIP2No(ipaddr, &ipno) != 1) {
-    return NULL;
-  }
   uint8_t dbtype = loc->databasetype;
   FILE *handle = loc->filehandle;
   uint8_t *cache = loc->cache;
@@ -388,9 +430,15 @@ IP2LocationRecord *IP2LocationQueryIPv4(IP2Location *loc, char *ipaddr, uint32_t
   uint32_t mid = 0;
   uint32_t ipfrom = 0;
   uint32_t ipto = 0;
+  IP2LocationRecord *record;
 
-  IP2LocationRecord *record = IP2LocationCreateRecord();
-  if (ipno == (uint32_t) MAX_IPV4_RANGE) {
+  if (IP2LocationIP2No(ipaddr, &ipno) != 1) {
+    return NULL;
+  }
+
+  record = IP2LocationCreateRecord();
+
+  if (ipno == (uint32_t) IP2L_MAX_IPV4_RANGE) {
     ipno = ipno - 1;
   }
 
@@ -400,121 +448,121 @@ IP2LocationRecord *IP2LocationQueryIPv4(IP2Location *loc, char *ipaddr, uint32_t
     ipto   = IP2LocationRead32(handle, cache, baseaddr + (mid + 1) * dbcolumn * 4);
 
     if ((ipno >= ipfrom) && (ipno < ipto)) {
-      if ((mode & COUNTRYSHORT) && (COUNTRY_POSITION[dbtype] != 0)) {
+      if ((mode & IP2L_COUNTRYSHORT) && (COUNTRY_POSITION[dbtype] != 0)) {
         record->country_short = IP2LocationReadStr(handle, cache, IP2LocationRead32(handle, cache, baseaddr + (mid * dbcolumn * 4) + 4 * (COUNTRY_POSITION[dbtype]-1)));
       } else {
         record->country_short = NULL;
       }
       
-      if ((mode & COUNTRYLONG) && (COUNTRY_POSITION[dbtype] != 0)) {
+      if ((mode & IP2L_COUNTRYLONG) && (COUNTRY_POSITION[dbtype] != 0)) {
         record->country_long = IP2LocationReadStr(handle, cache, IP2LocationRead32(handle, cache, baseaddr + (mid * dbcolumn * 4) + 4 * (COUNTRY_POSITION[dbtype]-1))+3);
       } else {
         record->country_long = NULL;
       }
 
-      if ((mode & REGION) && (REGION_POSITION[dbtype] != 0)) {
+      if ((mode & IP2L_REGION) && (REGION_POSITION[dbtype] != 0)) {
         record->region = IP2LocationReadStr(handle, cache, IP2LocationRead32(handle, cache, baseaddr + (mid * dbcolumn * 4) + 4 * (REGION_POSITION[dbtype]-1)));
       } else {
         record->region = NULL;
       }
 
-      if ((mode & CITY) && (CITY_POSITION[dbtype] != 0)) {
+      if ((mode & IP2L_CITY) && (CITY_POSITION[dbtype] != 0)) {
         record->city = IP2LocationReadStr(handle, cache, IP2LocationRead32(handle, cache, baseaddr + (mid * dbcolumn * 4) + 4 * (CITY_POSITION[dbtype]-1)));
       } else {
         record->city = NULL;
       }
 
-      if ((mode & ISP) && (ISP_POSITION[dbtype] != 0)) {
+      if ((mode & IP2L_ISP) && (ISP_POSITION[dbtype] != 0)) {
         record->isp = IP2LocationReadStr(handle, cache, IP2LocationRead32(handle, cache, baseaddr + (mid * dbcolumn * 4) + 4 * (ISP_POSITION[dbtype]-1)));
       } else {
         record->isp = NULL;
       }
 
-      if ((mode & LATITUDE) && (LATITUDE_POSITION[dbtype] != 0)) {
+      if ((mode & IP2L_LATITUDE) && (LATITUDE_POSITION[dbtype] != 0)) {
         record->latitude = IP2LocationReadFloat(handle, cache, baseaddr + (mid * dbcolumn * 4) + 4 * (LATITUDE_POSITION[dbtype]-1));
       } else {
         record->latitude = 0.0;
       }
 
-      if ((mode & LONGITUDE) && (LONGITUDE_POSITION[dbtype] != 0)) {
+      if ((mode & IP2L_LONGITUDE) && (LONGITUDE_POSITION[dbtype] != 0)) {
         record->longitude = IP2LocationReadFloat(handle, cache, baseaddr + (mid * dbcolumn * 4) + 4 * (LONGITUDE_POSITION[dbtype]-1));
       } else {
         record->longitude = 0.0;
       }
 
-      if ((mode & DOMAIN) && (DOMAIN_POSITION[dbtype] != 0)) {
+      if ((mode & IP2L_DOMAIN) && (DOMAIN_POSITION[dbtype] != 0)) {
         record->domain = IP2LocationReadStr(handle, cache, IP2LocationRead32(handle, cache, baseaddr + (mid * dbcolumn * 4) + 4 * (DOMAIN_POSITION[dbtype]-1)));
       } else {
         record->domain = NULL;
       }
 
-      if ((mode & ZIPCODE) && (ZIPCODE_POSITION[dbtype] != 0)) {
+      if ((mode & IP2L_ZIPCODE) && (ZIPCODE_POSITION[dbtype] != 0)) {
         record->zipcode = IP2LocationReadStr(handle, cache, IP2LocationRead32(handle, cache, baseaddr + (mid * dbcolumn * 4) + 4 * (ZIPCODE_POSITION[dbtype]-1)));
       } else {
         record->zipcode = NULL;
       }
       
-      if ((mode & TIMEZONE) && (TIMEZONE_POSITION[dbtype] != 0)) {
+      if ((mode & IP2L_TIMEZONE) && (TIMEZONE_POSITION[dbtype] != 0)) {
         record->timezone = IP2LocationReadStr(handle, cache, IP2LocationRead32(handle, cache, baseaddr + (mid * dbcolumn * 4) + 4 * (TIMEZONE_POSITION[dbtype]-1)));
       } else {
         record->timezone = NULL;
       }
       
-      if ((mode & NETSPEED) && (NETSPEED_POSITION[dbtype] != 0)) {
+      if ((mode & IP2L_NETSPEED) && (NETSPEED_POSITION[dbtype] != 0)) {
         record->netspeed = IP2LocationReadStr(handle, cache, IP2LocationRead32(handle, cache, baseaddr + (mid * dbcolumn * 4) + 4 * (NETSPEED_POSITION[dbtype]-1)));
       } else {
         record->netspeed = NULL;
       }
   
-      if ((mode & IDDCODE) && (IDDCODE_POSITION[dbtype] != 0)) {
+      if ((mode & IP2L_IDDCODE) && (IDDCODE_POSITION[dbtype] != 0)) {
         record->iddcode = IP2LocationReadStr(handle, cache, IP2LocationRead32(handle, cache, baseaddr + (mid * dbcolumn * 4) + 4 * (IDDCODE_POSITION[dbtype]-1)));
       } else {
         record->iddcode = NULL;
       }
   
-      if ((mode & AREACODE) && (AREACODE_POSITION[dbtype] != 0)) {
+      if ((mode & IP2L_AREACODE) && (AREACODE_POSITION[dbtype] != 0)) {
         record->areacode = IP2LocationReadStr(handle, cache, IP2LocationRead32(handle, cache, baseaddr + (mid * dbcolumn * 4) + 4 * (AREACODE_POSITION[dbtype]-1)));
       } else {
         record->areacode = NULL;
       }
   
-      if ((mode & WEATHERSTATIONCODE) && (WEATHERSTATIONCODE_POSITION[dbtype] != 0)) {
+      if ((mode & IP2L_WEATHERSTATIONCODE) && (WEATHERSTATIONCODE_POSITION[dbtype] != 0)) {
         record->weatherstationcode = IP2LocationReadStr(handle, cache, IP2LocationRead32(handle, cache, baseaddr + (mid * dbcolumn * 4) + 4 * (WEATHERSTATIONCODE_POSITION[dbtype]-1)));
       } else {
         record->weatherstationcode = NULL;
       }
   
-      if ((mode & WEATHERSTATIONNAME) && (WEATHERSTATIONNAME_POSITION[dbtype] != 0)) {
+      if ((mode & IP2L_WEATHERSTATIONNAME) && (WEATHERSTATIONNAME_POSITION[dbtype] != 0)) {
         record->weatherstationname = IP2LocationReadStr(handle, cache, IP2LocationRead32(handle, cache, baseaddr + (mid * dbcolumn * 4) + 4 * (WEATHERSTATIONNAME_POSITION[dbtype]-1)));
       } else {
         record->weatherstationname = NULL;
       }
 
-      if ((mode & MCC) && (MCC_POSITION[dbtype] != 0)) {
+      if ((mode & IP2L_MCC) && (MCC_POSITION[dbtype] != 0)) {
         record->mcc = IP2LocationReadStr(handle, cache, IP2LocationRead32(handle, cache, baseaddr + (mid * dbcolumn * 4) + 4 * (MCC_POSITION[dbtype]-1)));
       } else {
         record->mcc = NULL;
       }
 
-      if ((mode & MNC) && (MNC_POSITION[dbtype] != 0)) {
+      if ((mode & IP2L_MNC) && (MNC_POSITION[dbtype] != 0)) {
         record->mnc = IP2LocationReadStr(handle, cache, IP2LocationRead32(handle, cache, baseaddr + (mid * dbcolumn * 4) + 4 * (MNC_POSITION[dbtype]-1)));
       } else {
         record->mnc = NULL;
       }
 
-      if ((mode & MOBILEBRAND) && (MOBILEBRAND_POSITION[dbtype] != 0)) {
+      if ((mode & IP2L_MOBILEBRAND) && (MOBILEBRAND_POSITION[dbtype] != 0)) {
         record->mobilebrand = IP2LocationReadStr(handle, cache, IP2LocationRead32(handle, cache, baseaddr + (mid * dbcolumn * 4) + 4 * (MOBILEBRAND_POSITION[dbtype]-1)));
       } else {
         record->mobilebrand = NULL;
       }
       
-      if ((mode & ELEVATION) && (ELEVATION_POSITION[dbtype] != 0)) {
+      if ((mode & IP2L_ELEVATION) && (ELEVATION_POSITION[dbtype] != 0)) {
         record->elevation = IP2LocationReadFloat(handle, cache, baseaddr + (mid * dbcolumn * 4) + 4 * (ELEVATION_POSITION[dbtype]-1));
       } else {
         record->elevation = 0.0;
       }
       
-      if ((mode & USAGETYPE) && (USAGETYPE_POSITION[dbtype] != 0)) {
+      if ((mode & IP2L_USAGETYPE) && (USAGETYPE_POSITION[dbtype] != 0)) {
         record->usagetype = IP2LocationReadStr(handle, cache, IP2LocationRead32(handle, cache, baseaddr + (mid * dbcolumn * 4) + 4 * (USAGETYPE_POSITION[dbtype]-1)));
       } else {
         record->usagetype = NULL;
