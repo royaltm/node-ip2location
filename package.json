@@ -3,17 +3,14 @@
   "name": "node-ip2location",
   "description": "native ip2location bindings for node.js",
   "version": "0.0.1",
-  "homepage": "https://github.com/wisdio/node-ip2location",
+  "homepage": "https://github.com/advertine/node-ip2location",
   "repository": {
     "type": "git",
-    "url": "git://github.com/wisdio/node-ip2location.git"
+    "url": "git://github.com/advertine/node-ip2location.git"
   },
   "main": "index.js",
   "engines": {
     "node": ">=0.8.0"
-  },
-  "scripts": {
-    "install": "node-gyp configure build"
   },
   "dependencies": {
     "nan": "~1.6"
