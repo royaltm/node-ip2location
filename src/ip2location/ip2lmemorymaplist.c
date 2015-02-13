@@ -5,7 +5,7 @@ static IP2LMemoryMapList *cache_root = NULL;
 static IP2LMemoryMapList *mfile_root = NULL;
 static IP2LMemoryMapList *shmem_root = NULL;
 
-IP2LMemoryMapList **IP2LMemoryMapRoot(MEMORY_MAP_TYPE type) {
+static IP2LMemoryMapList **IP2LMemoryMapRoot(MEMORY_MAP_TYPE type) {
   switch(type) {
   case MEMMAP_TYPE_FILE:
     return &mfile_root;
@@ -17,7 +17,7 @@ IP2LMemoryMapList **IP2LMemoryMapRoot(MEMORY_MAP_TYPE type) {
   return NULL;
 }
 
-void IP2LPrependMemoryMapNode(IP2LMemoryMapList *new_mml) {
+static void IP2LPrependMemoryMapNode(IP2LMemoryMapList *new_mml) {
   IP2LMemoryMapList **root = IP2LMemoryMapRoot(new_mml->type);
   new_mml->prev = NULL;
   if (*root != NULL) {

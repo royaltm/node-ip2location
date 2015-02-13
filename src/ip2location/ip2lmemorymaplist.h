@@ -34,8 +34,6 @@ typedef struct IP2LMemoryMapList {
   SHARED_MEM_FHANDLE shm_fd;
 } IP2LMemoryMapList;
 
-IP2LMemoryMapList **IP2LMemoryMapRoot(MEMORY_MAP_TYPE type);
-void IP2LPrependMemoryMapNode(IP2LMemoryMapList *new_mml);
 IP2LMemoryMapList *IP2LFindMemoryMapNode(char *name, MEMORY_MAP_TYPE type);
 IP2LMemoryMapList *IP2LCreateMemoryMapNode(char *name, MEMORY_MAP_TYPE type);
 void IP2LDetachMemoryMapNode(IP2LMemoryMapList *mml);
