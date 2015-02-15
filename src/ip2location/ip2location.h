@@ -11,9 +11,9 @@
 
 #define IP2L_DB_POSITION_COUNT 19
 
-typedef enum IP2LocationOffsetIndex {
-  IP2L_COUNTRYSHORT_INDEX       =  0,
-  IP2L_COUNTRYLONG_INDEX        =  1,
+typedef enum {
+  IP2L_COUNTRY_SHORT_INDEX      =  0,
+  IP2L_COUNTRY_LONG_INDEX       =  1,
   IP2L_REGION_INDEX             =  2,
   IP2L_CITY_INDEX               =  3,
   IP2L_ISP_INDEX                =  4,
@@ -33,7 +33,7 @@ typedef enum IP2LocationOffsetIndex {
   IP2L_ELEVATION_INDEX          = 18,
   IP2L_USAGETYPE_INDEX          = 19,
   IP2L_INDEX_MAX                = IP2L_USAGETYPE_INDEX
-} IP2LOCATION_OFFSET_INDEX;
+} IP2LOCATION_DATA_INDEX;
 
 typedef enum IP2LocationAccessType {
   IP2LOCATION_FILE_IO,
@@ -52,6 +52,7 @@ typedef struct {
   uint32_t databaseaddr;
   uint32_t v6databasecount;
   uint32_t v6databaseaddr;
+  uint32_t mode_mask;
   IP2LOCATION_ACCESS_TYPE access_type;
   uint8_t databasetype;
   uint8_t databasecolumn;
@@ -67,7 +68,7 @@ IP2Location *IP2LocationOpen(char *db, IP2LOCATION_ACCESS_TYPE mtype, char *shar
 void IP2LocationClose(IP2Location *loc);
 int IP2LocationDeleteShared(IP2Location *loc);
 int IP2LocationRowData(IP2Location *loc,
-                       IP2LOCATION_OFFSET_INDEX index,
+                       IP2LOCATION_DATA_INDEX index,
                        uint32_t rowoffset,
                        const void *data[] );
 uint32_t IP2LocationFindRow(IP2Location *loc, char *ip);

@@ -3,7 +3,6 @@
 #include <sys/stat.h>
 
 #define IP2L_MAX_DBTYPE 24
-#define IP2L_MAX_DBCOLUMN 20
 #define IP2L_BASEADDR 65
 
 static const uint8_t IP2L_DB_POSITIONS[IP2L_DB_POSITION_COUNT][25] = {
@@ -132,63 +131,74 @@ static int IP2LocationInit(IP2Location *loc) {
     return 1;
   loc->databasetype = dbtype;
   loc->databasecolumn  = IP2LocationRead8(file,  cache, 2);
-  if (loc->databasecolumn > IP2L_MAX_DBCOLUMN)
-    return 2;
   loc->databaseyear    = IP2LocationRead8(file,  cache, 3);
   loc->databasemonth   = IP2LocationRead8(file,  cache, 4);
   if (loc->databasemonth > 12 || loc->databasemonth < 1)
-    return 3;
+    return 2;
   loc->databaseday     = IP2LocationRead8(file,  cache, 5);
-  if (loc->databasemonth > 31 || loc->databasemonth < 1)
-    return 4;
+  if (loc->databaseday > 31 || loc->databaseday < 1)
+    return 3;
   loc->databasecount   = IP2LocationRead32(file, cache, 6);
   if (loc->databasecount < 2)
-    return 5;
+    return 4;
   loc->databaseaddr    = IP2LocationRead32(file, cache, 10);
-  if (loc->databaseaddr != IP2L_BASEADDR)
-    return 6;
+  if (loc->databaseaddr < IP2L_BASEADDR)
+    return 5;
   loc->v6databasecount = IP2LocationRead32(file, cache, 14);
   loc->v6databaseaddr  = IP2LocationRead32(file, cache, 18);
 
   if ( loc->databaseaddr + (loc->databasecolumn * 4) *
         (loc->databasecount + 1) > loc->dbfilesize )
-    return 7;
+    return 6;
 
-  if ( loc->v6databasecount != 0 && (
-        loc->v6databaseaddr + (16 + ( (loc->databasecolumn - 1) * 4 )) *
-        (loc->v6databasecount + 1) > loc->dbfilesize ) )
-    return 8;
+  if ( loc->v6databasecount != 0 ) {
+    if ( loc->databaseaddr >= loc->v6databaseaddr )
+      return 7;
+    if ( loc->v6databaseaddr + (16 + ( (loc->databasecolumn - 1) * 4 )) *
+          (loc->v6databasecount + 1) > loc->dbfilesize )
+      return 8;
+  }
 
   {
     int i = 0;
-    uint8_t position, *offsets = loc->offsets;
+    uint8_t position, *offsets = loc->offsets, maxpos = 0;
+    uint32_t mode_mask = 0, mask = 1;
     for (; i < IP2L_DB_POSITION_COUNT; ++i) {
       if ( (position = IP2L_DB_POSITIONS[i][dbtype]) != 0 ) {
+        if (position > maxpos)
+          maxpos = position;
         offsets[i] = (position - 1) * 4;
+        mode_mask |= mask;
       } else {
         offsets[i] = 0;
       }
+      mask <<= 1;
     }
+    if (loc->databasecolumn != maxpos)
+      return 9;
+    /* COUNTRY position for both COUNTRYSHORT and COUNTRYLONG */
+    mask = mode_mask & 1;
+    loc->mode_mask = (mode_mask << 1) | mask;
   }
 
   return 0;
 }
 
 int IP2LocationRowData(IP2Location *loc,
-                       IP2LOCATION_OFFSET_INDEX index,
+                       IP2LOCATION_DATA_INDEX index,
                        uint32_t rowoffset,
                        const void *data[] ) {
   uint8_t coloffset;
 
   switch(index) {
-    case IP2L_COUNTRYSHORT_INDEX:
+    case IP2L_COUNTRY_SHORT_INDEX:
       if ( (coloffset = loc->offsets[(int)index]) != 0 ) {
         *data = IP2LocationReadStrIndexAtOffset(loc->filehandle, loc->cache, rowoffset + coloffset, 0);
         return IP2L_DATA_STRING;
       }
       break;
 
-    case IP2L_COUNTRYLONG_INDEX:
+    case IP2L_COUNTRY_LONG_INDEX:
       if ( (coloffset = loc->offsets[(int)index - 1]) != 0 ) {
         *data = IP2LocationReadStrIndexAtOffset(loc->filehandle, loc->cache, rowoffset + coloffset, 3);
         return IP2L_DATA_STRING;

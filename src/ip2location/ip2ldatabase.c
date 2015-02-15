@@ -240,7 +240,9 @@ IP2LMemoryMapList *IP2LocationSetupMMap(FILE *filehandle, size_t dbfilesize, cha
     mmlnode->mem_size = dbfilesize;
     mmlnode->shm_fd = shm_fd;
     mmlnode->count = 1;
+
   }
+
   return mmlnode;
 }
 
@@ -306,7 +308,9 @@ IP2LMemoryMapList *IP2LocationSetupShared(FILE *filehandle, size_t dbfilesize, c
     mmlnode->mem_size = shm_size;
     mmlnode->shm_fd = shm_fd;
     mmlnode->count = 1;
+
   }
+
   return mmlnode;
 }
 

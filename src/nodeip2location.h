@@ -36,4 +36,3 @@ class Location: public ObjectWrap {
     static NAN_METHOD(GetDbInfo);
     static NAN_METHOD(Query);
 };
-

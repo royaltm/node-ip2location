@@ -27,8 +27,8 @@ static const char * const LOCATION_RESULT_KEYS[IP2L_INDEX_MAX + 1] = {
 };
 
 static const char * const LOCATION_CONST_KEYS[IP2L_INDEX_MAX + 1] = {
-  "COUNTRYSHORT",
-  "COUNTRYLONG",
+  "COUNTRY_SHORT",
+  "COUNTRY_LONG",
   "REGION",
   "CITY",
   "ISP",
@@ -262,21 +262,22 @@ NAN_METHOD(Location::Query)
 {
   NanScope();
 
-  uint32_t mode(LOCATION_ALL);
-
-  if (args.Length() < 1) {
+  if ( args.Length() < 1 ) {
     return NanThrowError("IP address is required");
-  }
-  NanUtf8String ip( args[0] );
-
-  if (args.Length() > 1) {
-    mode = args[1]->Uint32Value();
   }
 
   Location *location = ObjectWrap::Unwrap<Location>( args.This() );
 
-  if (!location->iplocdb) {
+  if ( ! location->iplocdb ) {
     return NanThrowError("IP2LOCATION database is closed");
+  }
+
+  NanUtf8String ip( args[0] );
+
+  uint32_t mode( location->iplocdb->mode_mask );
+
+  if ( args.Length() > 1 ) {
+    mode &= args[1]->Uint32Value();
   }
 
   uint32_t dboffset = IP2LocationFindRow(location->iplocdb, *ip);
@@ -286,33 +287,36 @@ NAN_METHOD(Location::Query)
     uint8_t index = 0;
     uint32_t mask = 1;
 
-    for ( ; index <= IP2L_INDEX_MAX; ++index ) {
+    while ( mode != 0 ) {
       const unsigned char *data;
       if ( (mode & mask) != 0 ) {
         Local<Value> value;
         switch ( IP2LocationRowData(location->iplocdb,
-                                    static_cast<IP2LOCATION_OFFSET_INDEX>(index),
+                                    static_cast<IP2LOCATION_DATA_INDEX>(index),
                                     dboffset,
                                     (const void **)&data ) ) {
           case IP2L_DATA_STRING:
             value = NanNew<String>( (const char *)data + 1, data[0] );
             break;
           case IP2L_DATA_FLOAT:
-            value = NanNew<Number>( (double)(*(float *)data) );
+            value = NanNew<Number>( (const double)(*(const float *)data) );
             break;
           default:
-            value = NanFalse();
+            ;
         }
-        result->Set( NanNew<String>(LOCATION_RESULT_KEYS[index]), value );
+        if ( ! value.IsEmpty() )
+          result->Set( NanNew<String>(LOCATION_RESULT_KEYS[index]), value );
       }
-      if ( (mode &= ~mask) == 0 )
-        break;
+
+      mode &= ~mask;
       mask <<= 1;
+      ++index;
     }
+
     NanReturnValue(result);
   }
 
-  NanReturnValue( NanFalse() );
+  NanReturnNull();
 }
 
 Persistent<FunctionTemplate> Location::constructor;
