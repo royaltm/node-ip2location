@@ -236,6 +236,8 @@ NAN_METHOD(Location::GetDbInfo)
   Local<Object> info = NanNew<Object>();
   if (iplocdb) {
     info->Set( NanNew<String>("filename"), NanNew<String>(iplocdb->filename) );
+    info->Set( NanNew<String>("filesize"), NanNew<Uint32>( (uint32_t) iplocdb->filesize) );
+    info->Set( NanNew<String>("databasetype"), NanNew<Int32>(iplocdb->databasetype) );
     info->Set( NanNew<String>("databasetype"), NanNew<Int32>(iplocdb->databasetype) );
     info->Set( NanNew<String>("databasecolumn"), NanNew<Int32>(iplocdb->databasecolumn) );
     info->Set( NanNew<String>("databaseyear"), NanNew<Int32>(iplocdb->databaseyear) );
@@ -247,7 +249,8 @@ NAN_METHOD(Location::GetDbInfo)
     info->Set( NanNew<String>("v6databaseaddr"), NanNew<Int32>(iplocdb->v6databaseaddr) );
     if (iplocdb->mml_node != NULL) {
       info->Set(NanNew<String>("cacheoccupants"), NanNew<Int32>(iplocdb->mml_node->count));
-      info->Set(NanNew<String>("cachesize"), NanNew<Number>( (double) iplocdb->mml_node->mem_size) );
+      info->Set(NanNew<String>("cachesize"), NanNew<Uint32>( (uint32_t) iplocdb->mml_node->mem_size) );
+      info->Set(NanNew<String>("copybythisprocess"), NanNew<Boolean>( iplocdb->mml_node->copybythisprocess != 0 ) );
       if (iplocdb->mml_node->type == MEMMAP_TYPE_SHARED) {
         info->Set(NanNew<String>("sharedname"), NanNew<String>(iplocdb->mml_node->name));
       }

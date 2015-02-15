@@ -32,6 +32,7 @@ typedef struct IP2LMemoryMapList {
   int count;
   MEMORY_MAP_TYPE type;
   SHARED_MEM_FHANDLE shm_fd;
+  char copybythisprocess;
 } IP2LMemoryMapList;
 
 IP2LMemoryMapList *IP2LFindMemoryMapNode(char *name, MEMORY_MAP_TYPE type);

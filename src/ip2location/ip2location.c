@@ -60,7 +60,7 @@ IP2Location *IP2LocationOpen(char *db, IP2LOCATION_ACCESS_TYPE mtype, char *shar
   memset( loc, 0, sizeof(IP2Location) );
 
   loc->filename = strdup(db);
-  loc->dbfilesize = dbfilesize;
+  loc->filesize = dbfilesize;
   loc->cache = NULL;
   loc->mml_node = NULL;
 
@@ -148,14 +148,14 @@ static int IP2LocationInit(IP2Location *loc) {
   loc->v6databaseaddr  = IP2LocationRead32(file, cache, 18);
 
   if ( loc->databaseaddr + (loc->databasecolumn * 4) *
-        (loc->databasecount + 1) > loc->dbfilesize )
+        (loc->databasecount + 1) > loc->filesize )
     return 6;
 
   if ( loc->v6databasecount != 0 ) {
     if ( loc->databaseaddr >= loc->v6databaseaddr )
       return 7;
     if ( loc->v6databaseaddr + (16 + ( (loc->databasecolumn - 1) * 4 )) *
-          (loc->v6databasecount + 1) > loc->dbfilesize )
+          (loc->v6databasecount + 1) > loc->filesize )
       return 8;
   }
 

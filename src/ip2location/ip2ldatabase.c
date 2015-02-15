@@ -53,6 +53,7 @@ IP2LMemoryMapList *IP2LocationSetupCache(FILE *filehandle, size_t dbfilesize, ch
     mmlnode->mem_ptr = mem_ptr;
     mmlnode->mem_size = dbfilesize;
     mmlnode->count = 1;
+    mmlnode->copybythisprocess = 1;
   }
 
   return mmlnode;
@@ -86,6 +87,7 @@ IP2LMemoryMapList *IP2LocationSetupMMap(FILE *filehandle, size_t dbfilesize, cha
     mmlnode->mem_ptr = mem_ptr;
     mmlnode->mem_size = dbfilesize;
     mmlnode->count = 1;
+    mmlnode->copybythisprocess = 0;
 
   }
 
@@ -189,6 +191,7 @@ IP2LMemoryMapList *IP2LocationSetupShared(FILE *filehandle, size_t dbfilesize, c
     mmlnode->shm_ino = statbuf.st_ino;
     mmlnode->shm_fd = shm_fd;
     mmlnode->count = 1;
+    mmlnode->copybythisprocess = DB_loaded == 0 ? 1 : 0;
 
   }
 
@@ -240,6 +243,7 @@ IP2LMemoryMapList *IP2LocationSetupMMap(FILE *filehandle, size_t dbfilesize, cha
     mmlnode->mem_size = dbfilesize;
     mmlnode->shm_fd = shm_fd;
     mmlnode->count = 1;
+    mmlnode->copybythisprocess = 0;
 
   }
 
@@ -308,6 +312,7 @@ IP2LMemoryMapList *IP2LocationSetupShared(FILE *filehandle, size_t dbfilesize, c
     mmlnode->mem_size = shm_size;
     mmlnode->shm_fd = shm_fd;
     mmlnode->count = 1;
+    mmlnode->copybythisprocess = DB_loaded == 0 ? 1 : 0;
 
   }
 

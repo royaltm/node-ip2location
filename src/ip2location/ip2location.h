@@ -35,7 +35,7 @@ typedef enum {
   IP2L_INDEX_MAX                = IP2L_USAGETYPE_INDEX
 } IP2LOCATION_DATA_INDEX;
 
-typedef enum IP2LocationAccessType {
+typedef enum {
   IP2LOCATION_FILE_IO,
   IP2LOCATION_FILE_MMAP,
   IP2LOCATION_SHARED_MEMORY,
@@ -45,7 +45,7 @@ typedef enum IP2LocationAccessType {
 typedef struct {
   char *filename;
   FILE *filehandle;
-  size_t dbfilesize;
+  size_t filesize;
   uint8_t *cache;
   IP2LMemoryMapList *mml_node;
   uint32_t databasecount;
