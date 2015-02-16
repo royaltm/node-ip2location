@@ -29,12 +29,14 @@ static const uint8_t IP2L_DB_POSITIONS[IP2L_DB_POSITION_COUNT][25] = {
 
 static int IP2LocationInit(IP2Location *loc);
 
-static void IP2LocationFree(IP2Location *loc) {
+static void IP2LocationFree(IP2Location *loc)
+{
   free(loc->filename);
   free(loc);
 }
 
-IP2Location *IP2LocationOpen(char *db, IP2LOCATION_ACCESS_TYPE mtype, char *shared_name) {
+IP2Location *IP2LocationOpen(char *db, IP2LOCATION_ACCESS_TYPE mtype, char *shared_name)
+{
   FILE *filehandle;
   IP2Location *loc;
   int initFailed = 0;
@@ -109,21 +111,24 @@ IP2Location *IP2LocationOpen(char *db, IP2LOCATION_ACCESS_TYPE mtype, char *shar
   return loc;
 }
 
-void IP2LocationClose(IP2Location *loc) {
+void IP2LocationClose(IP2Location *loc)
+{
   if (loc != NULL) {
     IP2LocationDBClose(loc->filehandle, loc->mml_node);
     IP2LocationFree(loc);
   }
 }
 
-int IP2LocationDeleteShared(IP2Location *loc) {
+int IP2LocationDeleteShared(IP2Location *loc)
+{
   if (loc != NULL) {
     return IP2LocationDeleteSharedMap(loc->mml_node);
   }
   return 1;
 }
 
-static int IP2LocationInit(IP2Location *loc) {
+static int IP2LocationInit(IP2Location *loc)
+{
   uint8_t *cache = loc->cache;
   FILE *file = loc->filehandle;
   uint8_t dbtype = IP2LocationRead8(file,  cache, 1);
@@ -187,7 +192,8 @@ static int IP2LocationInit(IP2Location *loc) {
 int IP2LocationRowData(IP2Location *loc,
                        IP2LOCATION_DATA_INDEX index,
                        uint32_t rowoffset,
-                       const void *data[] ) {
+                       const void *data[] )
+{
   uint8_t coloffset;
 
   switch(index) {
@@ -241,7 +247,8 @@ int IP2LocationRowData(IP2Location *loc,
   return IP2L_NOT_FOUND;
 }
 
-static uint32_t IP2LocationFindRowIPV4(IP2Location *loc, uint32_t ipno) {
+static uint32_t IP2LocationFindRowIPV4(IP2Location *loc, uint32_t ipno)
+{
   uint32_t ipfrom, ipto;
   FILE *handle = loc->filehandle;
   uint8_t *cache = loc->cache;
@@ -276,7 +283,8 @@ static uint32_t IP2LocationFindRowIPV4(IP2Location *loc, uint32_t ipno) {
   return IP2L_NOT_FOUND;
 }
 
-static uint32_t IP2LocationFindRowIPV6(IP2Location *loc, ipv6le128_t *ip6no) {
+static uint32_t IP2LocationFindRowIPV6(IP2Location *loc, ipv6le128_t *ip6no)
+{
   ipv6le128_t ip6from, ip6to;
   FILE *handle = loc->filehandle;
   uint8_t *cache = loc->cache;
@@ -318,7 +326,8 @@ static uint32_t IP2LocationFindRowIPV6(IP2Location *loc, ipv6le128_t *ip6no) {
   return IP2L_NOT_FOUND;
 }
 
-uint32_t IP2LocationFindRow(IP2Location *loc, char *ip) {
+uint32_t IP2LocationFindRow(IP2Location *loc, char *ip)
+{
   ipv6le128_t ipaddr;
 
   switch( IP2LocationIP2No(ip, &ipaddr) ) {

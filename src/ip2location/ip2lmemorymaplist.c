@@ -5,7 +5,8 @@ static IP2LMemoryMapList *cache_root = NULL;
 static IP2LMemoryMapList *mfile_root = NULL;
 static IP2LMemoryMapList *shmem_root = NULL;
 
-static IP2LMemoryMapList **IP2LMemoryMapRoot(MEMORY_MAP_TYPE type) {
+static IP2LMemoryMapList **IP2LMemoryMapRoot(MEMORY_MAP_TYPE type)
+{
   switch(type) {
   case MEMMAP_TYPE_FILE:
     return &mfile_root;
@@ -17,7 +18,8 @@ static IP2LMemoryMapList **IP2LMemoryMapRoot(MEMORY_MAP_TYPE type) {
   return NULL;
 }
 
-static void IP2LPrependMemoryMapNode(IP2LMemoryMapList *new_mml) {
+static void IP2LPrependMemoryMapNode(IP2LMemoryMapList *new_mml)
+{
   IP2LMemoryMapList **root = IP2LMemoryMapRoot(new_mml->type);
   new_mml->prev = NULL;
   if (*root != NULL) {
@@ -29,7 +31,8 @@ static void IP2LPrependMemoryMapNode(IP2LMemoryMapList *new_mml) {
   *root = new_mml;
 }
 
-IP2LMemoryMapList *IP2LFindMemoryMapNode(char *name, MEMORY_MAP_TYPE type) {
+IP2LMemoryMapList *IP2LFindMemoryMapNode(char *name, MEMORY_MAP_TYPE type)
+{
   IP2LMemoryMapList **root = IP2LMemoryMapRoot(type);
   IP2LMemoryMapList *mml = *root;
   while (mml != NULL) {
@@ -39,7 +42,8 @@ IP2LMemoryMapList *IP2LFindMemoryMapNode(char *name, MEMORY_MAP_TYPE type) {
   return mml;
 }
 
-IP2LMemoryMapList *IP2LCreateMemoryMapNode(char *name, MEMORY_MAP_TYPE type) {
+IP2LMemoryMapList *IP2LCreateMemoryMapNode(char *name, MEMORY_MAP_TYPE type)
+{
   IP2LMemoryMapList *mml = (IP2LMemoryMapList *)malloc(sizeof(IP2LMemoryMapList));
   mml->type = type;
   mml->name = strdup(name);
@@ -49,7 +53,8 @@ IP2LMemoryMapList *IP2LCreateMemoryMapNode(char *name, MEMORY_MAP_TYPE type) {
   return mml;
 }
 
-void IP2LDetachMemoryMapNode(IP2LMemoryMapList *mml) {
+void IP2LDetachMemoryMapNode(IP2LMemoryMapList *mml)
+{
   IP2LMemoryMapList **root = IP2LMemoryMapRoot(mml->type);
   if (*root == mml) {
     *root = mml->next;
@@ -64,7 +69,8 @@ void IP2LDetachMemoryMapNode(IP2LMemoryMapList *mml) {
   mml->prev = NULL;
 }
 
-void IP2LFreeMemoryMapNode(IP2LMemoryMapList *mml) {
+void IP2LFreeMemoryMapNode(IP2LMemoryMapList *mml)
+{
   IP2LDetachMemoryMapNode(mml);
   free(mml->name);
   free(mml);

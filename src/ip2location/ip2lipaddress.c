@@ -1,15 +1,16 @@
 #include "ip2lipaddress.h"
 
 #ifndef WIN32
-#include <sys/socket.h>
-#include <netinet/in.h>
+#  include <sys/socket.h>
+#  include <netinet/in.h>
 #else
 #ifdef WIN32
-#include <Winsock2.h>
+#  include <Winsock2.h>
 #endif
 #endif
 
-int IP2LocationIPv6Cmp(ipv6le128_t *a, ipv6le128_t *b) {
+int IP2LocationIPv6Cmp(ipv6le128_t *a, ipv6le128_t *b)
+{
   uint32_t x, y;
   if ((x = (*a).ui32[3]) == (y = (*b).ui32[3]) &&
       (x = (*a).ui32[2]) == (y = (*b).ui32[2]) &&
@@ -20,7 +21,8 @@ int IP2LocationIPv6Cmp(ipv6le128_t *a, ipv6le128_t *b) {
     return (x > y) ? 1 : -1;
 }
 
-int IP2LocationIP2No(char *ipstr, ipv6le128_t *ip) {
+int IP2LocationIP2No(char *ipstr, ipv6le128_t *ip)
+{
   uint32_t buff[4];
   if (inet_pton(AF_INET, ipstr, (void *)buff) == 1) {
 
