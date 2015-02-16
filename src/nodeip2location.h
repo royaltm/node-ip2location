@@ -50,8 +50,8 @@ class Location: public ObjectWrap {
                               IP2Location *loc,
                               uint32_t mask);
     static void FreeDictionary(Map<IP2LDictionary>::type &dict);
-    static Local<Object> CreateDictionaryResult(Map<IP2LDictionary>::type &dict, uint32_t mask);
-    static Local<Array> CreateArrayResult(Map<IP2LDictionary>::type &dict);
+    static Local<Object> CreateDictionaryResult(const Map<IP2LDictionary>::type &dict, const uint32_t mask);
+    static Local<Array> CreateArrayResult(const Map<IP2LDictionary>::type &dict);
 };
 
 #endif /* HAVE_NODEIP2LOCATION_H */

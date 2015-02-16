@@ -46,9 +46,9 @@ void Location::MakeDictionaryItem(IP2Location *loc,
     if ( entry == NULL )
       return;
 
-    if ( entry->second_name == NULL && ((mask & IP2L_COUNTRY_LONG_MASK) != 0) ) {
+    if ( entry->SecondName() == NULL && ((mask & IP2L_COUNTRY_LONG_MASK) != 0) ) {
       if ( IP2L_DATA_STRING == IP2LocationRowString(loc, IP2L_COUNTRY_LONG_INDEX, rowoffset, name) ) {
-        entry->second_name = strdup(name);
+        entry->SecondName(name);
       }
     }
     if ( (mask & IP2L_REGION_MASK) != 0 ) {
@@ -127,7 +127,7 @@ void Location::FreeDictionary(Map<IP2LDictionary>::type &dict)
   dict.clear();
 }
 
-Local<Object> Location::CreateDictionaryResult(Map<IP2LDictionary>::type &dict, uint32_t mask)
+Local<Object> Location::CreateDictionaryResult(const Map<IP2LDictionary>::type &dict, const uint32_t mask)
 {
   NanEscapableScope();
   Local<Object> result( NanNew<Object>() );
@@ -146,7 +146,7 @@ Local<Object> Location::CreateDictionaryResult(Map<IP2LDictionary>::type &dict, 
 
   uint32_t country_index = 0;
 
-  for( Map<IP2LDictionary>::type::iterator it = dict.begin();
+  for( Map<IP2LDictionary>::type::const_iterator it = dict.begin();
                                       it != dict.end(); ++it ) {
     IP2LDictionary *country = it->second;
     Local<Object> country_result( NanNew<Object>() );
@@ -154,26 +154,26 @@ Local<Object> Location::CreateDictionaryResult(Map<IP2LDictionary>::type &dict, 
     country_result->Set( country_short, short_name );
 
     if ( (mask & IP2L_COUNTRY_LONG_MASK) != 0 ) {
-      if ( country->second_name != NULL ) {
-        country_result->Set( country_long, NanNew<String>( country->second_name ) );
+      if ( country->SecondName() != NULL ) {
+        country_result->Set( country_long, NanNew<String>( country->SecondName() ) );
       } else {
         country_result->Set( country_long, NanNull() );
       }
     }
 
     if ( (mask & IP2L_REGION_MASK) != 0 ) {
-      Map<IP2LDictionary>::type &region_map = country->children[IP2L_DICT_REGION_CITY];
+      const Map<IP2LDictionary>::type &region_map = country->Children(IP2L_DICT_REGION_CITY);
       Local<Array> region_array = CreateArrayResult(region_map);
 
       if ( (mask & IP2L_CITY_MASK) != 0 ) {
         Local<Object> region_result( NanNew<Object>() );
         region_result->Set( _index, region_array );
         uint32_t region_index = 0;
-        for( Map<IP2LDictionary>::type::iterator itr = region_map.begin();
+        for( Map<IP2LDictionary>::type::const_iterator itr = region_map.begin();
                                             itr != region_map.end(); ++itr ) {
           region_result->Set(
                               region_array->Get(region_index++),
-                              CreateArrayResult(itr->second->children[IP2L_DICT_REGION_CITY]) );
+                              CreateArrayResult(itr->second->Children(IP2L_DICT_REGION_CITY)) );
         }
         country_result->Set( regions, region_result );
       } else {
@@ -184,31 +184,31 @@ Local<Object> Location::CreateDictionaryResult(Map<IP2LDictionary>::type &dict, 
     if ( (mask & IP2L_ISP_MASK) != 0 ) {
       country_result->Set(
                         isp,
-                        CreateArrayResult(country->children[IP2L_DICT_ISP]) );
+                        CreateArrayResult(country->Children(IP2L_DICT_ISP)) );
     }
 
     if ( (mask & IP2L_DOMAIN_MASK) != 0 ) {
       country_result->Set(
                         domain,
-                        CreateArrayResult(country->children[IP2L_DICT_DOMAIN]) );
+                        CreateArrayResult(country->Children(IP2L_DICT_DOMAIN)) );
     }
 
     if ( (mask & IP2L_ZIPCODE_MASK) != 0 ) {
       country_result->Set(
                         zipcode,
-                        CreateArrayResult(country->children[IP2L_DICT_ZIPCODE]) );
+                        CreateArrayResult(country->Children(IP2L_DICT_ZIPCODE)) );
     }
 
     if ( (mask & IP2L_IDDCODE_MASK) != 0 ) {
       country_result->Set(
                         iddcode,
-                        CreateArrayResult(country->children[IP2L_DICT_IDDCODE]) );
+                        CreateArrayResult(country->Children(IP2L_DICT_IDDCODE)) );
     }
 
     if ( (mask & IP2L_AREACODE_MASK) != 0 ) {
       country_result->Set(
                         areacode,
-                        CreateArrayResult(country->children[IP2L_DICT_AREACODE]) );
+                        CreateArrayResult(country->Children(IP2L_DICT_AREACODE)) );
     }
 
     result->Set( short_name, country_result );
@@ -217,7 +217,7 @@ Local<Object> Location::CreateDictionaryResult(Map<IP2LDictionary>::type &dict, 
   return NanEscapeScope(result);
 }
 
-Local<Array> Location::CreateArrayResult(Map<IP2LDictionary>::type &dict)
+Local<Array> Location::CreateArrayResult(const Map<IP2LDictionary>::type &dict)
 {
   NanEscapableScope();
 
@@ -225,9 +225,9 @@ Local<Array> Location::CreateArrayResult(Map<IP2LDictionary>::type &dict)
 
   uint32_t count = 0;
 
-  for( Map<IP2LDictionary>::type::iterator it = dict.begin();
+  for( Map<IP2LDictionary>::type::const_iterator it = dict.begin();
                                       it != dict.end(); ++it ) {
-    result->Set( count++, NanNew<String>(it->second->name) );
+    result->Set( count++, NanNew<String>( it->second->Name() ) );
   }
   return NanEscapeScope(result);
 }

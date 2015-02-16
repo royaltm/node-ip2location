@@ -34,10 +34,21 @@ class IP2LDictionary {
     static IP2LDictionary *FindOrAddDictionaryElementMap(char *name,
                                           Map<IP2LDictionary>::type &map,
                                           unsigned int level = 0);
+
+    const char* Name(void);
+    const char* SecondName(void);
+    void SecondName(const char *value);
+    unsigned int Level(void);
+    const Map<IP2LDictionary>::type &Children(IP2L_DICT_TYPE type);
+
+  private:
     char* name;
     char* second_name;
     unsigned int level;
     Map<IP2LDictionary>::type children[IP2L_DICT_TYPE_MAX + 1];
+
+    IP2LDictionary(const IP2LDictionary&);
+    void operator=(const IP2LDictionary&);
 };
 
 #endif /* HAVE_NODEIP2L_DICTIONARY_H */
