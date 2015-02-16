@@ -3,7 +3,6 @@
 
 #include "ip2lipaddress.h"
 #include "ip2ldatabase.h"
-#include "ip2locationdict.h"
 
 #define IP2L_NOT_FOUND   0
 #define IP2L_DATA_STRING 1
@@ -34,6 +33,27 @@ typedef enum {
   IP2L_USAGETYPE_INDEX          = 19,
   IP2L_INDEX_MAX                = IP2L_USAGETYPE_INDEX
 } IP2LOCATION_DATA_INDEX;
+
+#define IP2L_COUNTRY_SHORT_MASK      (1U << IP2L_COUNTRY_SHORT_INDEX)
+#define IP2L_COUNTRY_LONG_MASK       (1U << IP2L_COUNTRY_LONG_INDEX)
+#define IP2L_REGION_MASK             (1U << IP2L_REGION_INDEX)
+#define IP2L_CITY_MASK               (1U << IP2L_CITY_INDEX)
+#define IP2L_ISP_MASK                (1U << IP2L_ISP_INDEX)
+#define IP2L_LATITUDE_MASK           (1U << IP2L_LATITUDE_INDEX)
+#define IP2L_LONGITUDE_MASK          (1U << IP2L_LONGITUDE_INDEX)
+#define IP2L_DOMAIN_MASK             (1U << IP2L_DOMAIN_INDEX)
+#define IP2L_ZIPCODE_MASK            (1U << IP2L_ZIPCODE_INDEX)
+#define IP2L_TIMEZONE_MASK           (1U << IP2L_TIMEZONE_INDEX)
+#define IP2L_NETSPEED_MASK           (1U << IP2L_NETSPEED_INDEX)
+#define IP2L_IDDCODE_MASK            (1U << IP2L_IDDCODE_INDEX)
+#define IP2L_AREACODE_MASK           (1U << IP2L_AREACODE_INDEX)
+#define IP2L_WEATHERSTATIONCODE_MASK (1U << IP2L_WEATHERSTATIONCODE_INDEX)
+#define IP2L_WEATHERSTATIONNAME_MASK (1U << IP2L_WEATHERSTATIONNAME_INDEX)
+#define IP2L_MCC_MASK                (1U << IP2L_MCC_INDEX)
+#define IP2L_MNC_MASK                (1U << IP2L_MNC_INDEX)
+#define IP2L_MOBILEBRAND_MASK        (1U << IP2L_MOBILEBRAND_INDEX)
+#define IP2L_ELEVATION_MASK          (1U << IP2L_ELEVATION_INDEX)
+#define IP2L_USAGETYPE_MASK          (1U << IP2L_USAGETYPE_INDEX)
 
 typedef enum {
   IP2LOCATION_FILE_IO,
@@ -67,14 +87,14 @@ typedef struct {
 IP2Location *IP2LocationOpen(char *db, IP2LOCATION_ACCESS_TYPE mtype, char *shared_name);
 void IP2LocationClose(IP2Location *loc);
 int IP2LocationDeleteShared(IP2Location *loc);
+uint32_t IP2LocationFindRow(IP2Location *loc, char *ip);
 int IP2LocationRowData(IP2Location *loc,
                        IP2LOCATION_DATA_INDEX index,
                        uint32_t rowoffset,
-                       const void *data[] );
-uint32_t IP2LocationFindRow(IP2Location *loc, char *ip);
-// IP2LocationRecord *IP2LocationQuery(IP2Location *loc, char *ip, uint32_t mode);
-// void IP2LocationFreeRecord(IP2LocationRecord *record);
-// int IP2LocationMakeSimpleDictionary(IP2Location *loc, const char *filename, uint32_t mode);
-// int IP2LocationMakeDictionary(IP2Location *loc, char *dir);
+                       const void *data[]);
+int IP2LocationRowString(IP2Location *loc,
+                                IP2LOCATION_DATA_INDEX index,
+                                uint32_t rowoffset,
+                                char *buff);
 
 #endif /* HAVE_IP2LOCATION_H */

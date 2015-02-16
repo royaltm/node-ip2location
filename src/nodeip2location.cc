@@ -3,6 +3,8 @@
 using namespace node;
 using namespace v8;
 
+#include "nodeip2ldict_result_impl.h"
+
 static const char * const LOCATION_RESULT_KEYS[IP2L_INDEX_MAX + 1] = {
   "country_short",
   "country_long",
@@ -74,8 +76,7 @@ void Location::Init(Handle<Object> exports)
   NODE_SET_PROTOTYPE_METHOD(tpl, "close", CloseDatabase);
   NODE_SET_PROTOTYPE_METHOD(tpl, "info", GetDbInfo);
   NODE_SET_PROTOTYPE_METHOD(tpl, "deleteShared", DeleteShared);
-  // NODE_SET_PROTOTYPE_METHOD(tpl, "createDictionary", CreateDictionary);
-  // NODE_SET_PROTOTYPE_METHOD(tpl, "createISPDictionary", CreateSimpleDictionary);
+  NODE_SET_PROTOTYPE_METHOD(tpl, "createDictionary", CreateDictionary);
 
   exports->Set( NanNew<String>("Location"), NanNew<FunctionTemplate>(constructor)->GetFunction() );
 }
@@ -172,7 +173,9 @@ NAN_METHOD(Location::CloseDatabase)
 NAN_METHOD(Location::DeleteShared)
 {
   NanScope();
+
   Location* location = ObjectWrap::Unwrap<Location>(args.This());
+
   switch(IP2LocationDeleteShared(location->iplocdb)) {
   case 0:
     NanReturnValue( NanTrue() );
@@ -183,51 +186,32 @@ NAN_METHOD(Location::DeleteShared)
   }
 }
 
-/*    NAN_METHOD(Location::CreateDictionary)
+NAN_METHOD(Location::CreateDictionary)
 {
   NanScope();
+
   Location* location = ObjectWrap::Unwrap<Location>(args.This());
   if (!location->iplocdb) {
     return NanThrowError("IP2LOCATION database is closed");
   }
-  if (args.Length() < 1) {
-    return NanThrowTypeError("missing directory name");
+
+  uint32_t mode( LOCATION_ALL );
+
+  if ( args.Length() > 0 ) {
+    mode = args[0]->Uint32Value();
   }
-  int ret = IP2LocationMakeDictionary( location->iplocdb, *NanUtf8String( args[0] ) );
-  if (ret < 0) {
-    switch(ret) {
-      case -1:
-        return NanThrowError("couldn't create file or directory");
-      default:
-        return NanThrowError("error saving dictionary");
-    }
-  }
-  NanReturnValue(NanNew<Number>(ret));
+
+  Map<IP2LDictionary>::type dict;
+
+  MakeDictionary(dict, location->iplocdb, mode);
+
+  Local<Object> result = CreateDictionaryResult(dict, mode);
+
+  FreeDictionary(dict);
+
+  NanReturnValue(result);
 }
 
-NAN_METHOD(Location::CreateSimpleDictionary)
-{
-  NanScope();
-  Location* location = ObjectWrap::Unwrap<Location>(args.This());
-  if (!location->iplocdb) {
-    return NanThrowError("IP2LOCATION database is closed");
-  }
-  if (args.Length() < 1) {
-    return NanThrowTypeError("missing directory name");
-  }
-  int ret = IP2LocationMakeSimpleDictionary(location->iplocdb, *NanUtf8String( args[0] ), IP2L_ISP);
-  if (ret < 0) {
-    switch(ret) {
-    case -1:
-      return NanThrowError("couldn't create file");
-    default:
-      return NanThrowError("error saving dictionary");
-    }
-  }
-  NanReturnValue(NanNew<Number>(ret));
-}
-
-*/
 NAN_METHOD(Location::GetDbInfo)
 {
   NanScope();

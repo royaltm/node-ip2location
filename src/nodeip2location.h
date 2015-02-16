@@ -1,3 +1,6 @@
+#ifndef HAVE_NODEIP2LOCATION_H
+#define HAVE_NODEIP2LOCATION_H
+
 #include <nan.h>
 #include <v8.h>
 #include <node.h>
@@ -6,6 +9,8 @@
 extern "C" {
 #  include "ip2location.h"
 }
+
+#include "nodeip2ldictionary.h"
 
 using namespace node;
 using namespace v8;
@@ -33,6 +38,20 @@ class Location: public ObjectWrap {
     static NAN_GETTER(GetIsOpen);
     static NAN_METHOD(CloseDatabase);
     static NAN_METHOD(DeleteShared);
+    static NAN_METHOD(CreateDictionary);
     static NAN_METHOD(GetDbInfo);
     static NAN_METHOD(Query);
+  private:
+    static void MakeDictionaryItem(IP2Location *loc,
+                                  uint32_t rowoffset,
+                                  uint32_t mask,
+                                  Map<IP2LDictionary>::type &dict);
+    static void MakeDictionary(Map<IP2LDictionary>::type &dict,
+                              IP2Location *loc,
+                              uint32_t mask);
+    static void FreeDictionary(Map<IP2LDictionary>::type &dict);
+    static Local<Object> CreateDictionaryResult(Map<IP2LDictionary>::type &dict, uint32_t mask);
+    static Local<Array> CreateArrayResult(Map<IP2LDictionary>::type &dict);
 };
+
+#endif /* HAVE_NODEIP2LOCATION_H */

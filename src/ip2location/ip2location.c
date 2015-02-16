@@ -318,7 +318,6 @@ static uint32_t IP2LocationFindRowIPV6(IP2Location *loc, ipv6le128_t *ip6no) {
   return IP2L_NOT_FOUND;
 }
 
-
 uint32_t IP2LocationFindRow(IP2Location *loc, char *ip) {
   ipv6le128_t ipaddr;
 
@@ -331,122 +330,18 @@ uint32_t IP2LocationFindRow(IP2Location *loc, char *ip) {
   return IP2L_NOT_FOUND;
 }
 
-/*
-int IP2LocationMakeSimpleDictionary(IP2Location *loc, const char *filename, uint32_t mode) {
-  uint8_t dbtype = loc->databasetype;
-  FILE *handle = loc->filehandle;
-  uint8_t *cache = loc->cache;
-  uint32_t baseaddr = loc->databaseaddr;
-  uint32_t dbcount = loc->databasecount;
-  uint32_t dbcolumn = loc->databasecolumn;
 
-  uint32_t min = 0xFFFFFFFFU, max = 0, index, value;
-
-  for (index = 0; index < dbcount; ++index) {
-    if ((mode & IP2L_ISP) && (ISP_POSITION[dbtype] != 0)) {
-      if (loc->ipversion == IP2L_IPV6) {
-        value = IP2LocationRead32(handle, cache, baseaddr + index * (dbcolumn * 4 + 12) + 12 + 4 * (ISP_POSITION[dbtype]-1));
-      } else {
-        value = IP2LocationRead32(handle, cache, baseaddr + (index * dbcolumn * 4) + 4 * (ISP_POSITION[dbtype]-1));
-      }
-      if (value > max) max = value;
-      if (value < min) min = value;
-    }
+int IP2LocationRowString(IP2Location *loc,
+                         IP2LOCATION_DATA_INDEX index,
+                         uint32_t rowoffset,
+                         char *buff)
+{
+  const unsigned char *data;
+  if ( IP2L_DATA_STRING == IP2LocationRowData(loc, index, rowoffset, (const void **)&data) ) {
+    int length = data[0];
+    memcpy(buff, data + 1, length);
+    buff[length] = 0;
+    return IP2L_DATA_STRING;
   }
-
-  if (min <= max) {
-    FILE *file = fopen(filename, "w");
-    value = 0;
-    if (file == NULL)
-      return -1;
-
-    for(index = min; index <= max; ++value) {
-      const char *name = IP2LocationReadStr(handle, cache, index);
-      index += strlen(name) + 1;
-      fprintf(file, "%s\n", name);
-      free((void *)name);
-    }
-
-    fclose(file);
-    return value;
-  }
-
-  return -2;
+  return IP2L_NOT_FOUND;
 }
-
-char *IP2LocationReadRecord(IP2Location *loc, uint32_t index, uint32_t mode) {
-  uint8_t dbtype = loc->databasetype;
-  FILE *handle = loc->filehandle;
-  uint8_t *cache = loc->cache;
-  uint32_t baseaddr = loc->databaseaddr;
-  uint32_t dbcount = loc->databasecount;
-  uint32_t dbcolumn = loc->databasecolumn;
-
-  if (index > dbcount) return NULL;
-
-  if (mode & IP2L_COUNTRYSHORT) {
-    if (COUNTRY_POSITION[dbtype] != 0) {
-      if (loc->ipversion == IP2L_IPV6) {
-        return IP2LocationReadStr(handle, cache, IP2LocationRead32(handle, cache, baseaddr + index * (dbcolumn * 4 + 12) + 12 + 4 * (COUNTRY_POSITION[dbtype]-1)));
-      } else {
-        return IP2LocationReadStr(handle, cache, IP2LocationRead32(handle, cache, baseaddr + (index * dbcolumn * 4) + 4 * (COUNTRY_POSITION[dbtype]-1)));
-      }
-    }
-  } else if (mode & IP2L_COUNTRYLONG) {
-    if (COUNTRY_POSITION[dbtype] != 0) {
-      if (loc->ipversion == IP2L_IPV6) {
-        return IP2LocationReadStr(handle, cache, IP2LocationRead32(handle, cache, baseaddr + index * (dbcolumn * 4 + 12) + 12 + 4 * (COUNTRY_POSITION[dbtype]-1))+3);
-      } else {
-        return IP2LocationReadStr(handle, cache, IP2LocationRead32(handle, cache, baseaddr + (index * dbcolumn * 4) + 4 * (COUNTRY_POSITION[dbtype]-1))+3);
-      }
-    }
-  } else if (mode & IP2L_REGION) {
-    if (REGION_POSITION[dbtype] != 0) {
-      if (loc->ipversion == IP2L_IPV6) {
-        return IP2LocationReadStr(handle, cache, IP2LocationRead32(handle, cache, baseaddr + index * (dbcolumn * 4 + 12) + 12 + 4 * (REGION_POSITION[dbtype]-1)));
-      } else {
-        return IP2LocationReadStr(handle, cache, IP2LocationRead32(handle, cache, baseaddr + (index * dbcolumn * 4) + 4 * (REGION_POSITION[dbtype]-1)));
-      }
-    }
-  } else if (mode & IP2L_CITY) {
-    if (CITY_POSITION[dbtype] != 0) {
-      if (loc->ipversion == IP2L_IPV6) {
-        return IP2LocationReadStr(handle, cache, IP2LocationRead32(handle, cache, baseaddr + index * (dbcolumn * 4 + 12) + 12 + 4 * (CITY_POSITION[dbtype]-1)));
-      } else {
-        return IP2LocationReadStr(handle, cache, IP2LocationRead32(handle, cache, baseaddr + (index * dbcolumn * 4) + 4 * (CITY_POSITION[dbtype]-1)));
-      }
-    }
-  }
-  return NULL;
-}
-
-int IP2LocationMakeDictionary(IP2Location *loc, char *dir) {
-  uint32_t index, dbcount = loc->databasecount;
-  char *name = NULL;
-  IP2LDictionary *countryDict = NULL, *regionDict = NULL;
-  for (index = 0; index < dbcount; index++) {
-    if ((name = IP2LocationReadRecord(loc, index, IP2L_COUNTRYSHORT)) != NULL) {
-      countryDict = IP2LFindOrAddDictionaryElement(name, NULL);
-      free(name);
-      if (countryDict != NULL) {
-        if ((name = IP2LocationReadRecord(loc, index, IP2L_REGION)) != NULL) {
-          regionDict = IP2LFindOrAddDictionaryElement(name, countryDict);
-          free(name);
-          if (regionDict != NULL) {
-            if ((name = IP2LocationReadRecord(loc, index, IP2L_CITY)) != NULL) {
-              IP2LFindOrAddDictionaryElement(name, regionDict);
-              free(name);
-            }
-          }
-        }
-      }
-    }
-  }
-  {
-    int ret = IP2LSaveAllDictionaries(dir);
-    IP2LFreeDictionary(NULL);
-    return ret;
-  }
-}
-
-*/
