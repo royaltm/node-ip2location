@@ -1,5 +1,7 @@
 #Node.js addon module for IP2Location
 
+This is a complete re-write of database client library, optimized for speed.
+
 There is no official binary database documentation so this code
 is based on the IP2Location C library from official site:
 
@@ -36,7 +38,7 @@ However this implementation does not need any external library.
       elevation: .... }
 
     # retrieve only country short, latitude and longitude
-    location.query('8.8.8.8', Ip2Location.COUNTRYSHORT | Ip2Location.LATITUDE | Ip2Location.LONGITUDE);
+    location.query('8.8.8.8', Ip2Location.COUNTRY_SHORT | Ip2Location.LATITUDE | Ip2Location.LONGITUDE);
     { country_short: ....,
       latitude: ....,
       longitude: ....}
