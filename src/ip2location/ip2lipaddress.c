@@ -37,6 +37,11 @@ int IP2LocationIP2No(char *ipstr, ipv6le128_t *ip)
     ip->ui32[2] = ntohl(buff[1]);
     ip->ui32[3] = ntohl(buff[0]);
 
+    /* IPv4Map */
+    if ( ip->ui32[1] == 0x0000FFFFU &&
+         ! (ip->ui32[2] | ip->ui32[3]) )
+      return 4;
+
     return 6;
 
   }
