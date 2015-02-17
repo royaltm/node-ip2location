@@ -63,7 +63,7 @@ void Location::Init(Handle<Object> exports)
   i_t->SetAccessor( NanNew<String>("mode"), GetDbMode );
   i_t->SetAccessor( NanNew<String>("opened"), GetIsOpen );
 
-  for(int index = 0; index < IP2L_INDEX_MAX; ++index) {
+  for(int index = 0; index <= IP2L_INDEX_MAX; ++index) {
     tpl->Set( NanNew<String>(LOCATION_CONST_KEYS[index]),
               NanNew<Int32>(1 << index),
               static_cast<PropertyAttribute>(ReadOnly | DontDelete) );
