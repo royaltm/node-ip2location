@@ -2,7 +2,6 @@
 # error 'nodeip2ldictionary_impl.h' is not supposed to be included directly.
 #endif
 
-
 /* IP2LDictionaryElement */
 
 IP2LDictionaryElement::IP2LDictionaryElement(const char *name_)

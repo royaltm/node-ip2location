@@ -62,20 +62,20 @@ class Location: public ObjectWrap {
     static Local<Object> CreateDictionaryResult( const IP2LDictionary &dict,
                                                  const uint32_t mask );
     static Local<Array> CreateArrayResult(
-                                  const Map<IP2LDictionaryElement>::type &map);
+                            const Map<IP2LDictionaryElement>::type &dict_map);
     NAN_INLINE static void CreateDictionaryResultBranch(
                             const uint32_t mask,
                             const uint32_t branch_mask,
                             const uint32_t leaf_mask,
                             const Map<IP2LDictionaryElement>::type &branch_map,
-                            Handle<String> &indexLabel,
-                            Handle<String> &label,
+                            const Handle<String> &indexLabel,
+                            const Handle<String> &label,
                             Handle<Object> &result);
     NAN_INLINE static void CreateDictionaryResultElement(
                               const uint32_t mask,
                               const uint32_t leaf_mask,
                               const Map<IP2LDictionaryElement>::type &leaf_map,
-                              Handle<String> &label,
+                              const Handle<String> &label,
                               Handle<Object> &result);
 };
 

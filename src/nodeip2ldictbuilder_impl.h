@@ -269,29 +269,13 @@ Local<Object> Location::CreateDictionaryResult( const IP2LDictionary &dict,
   return NanEscapeScope(result);
 }
 
-Local<Array> Location::CreateArrayResult(
-                              const Map<IP2LDictionaryElement>::type &dict_map)
-{
-  NanEscapableScope();
-
-  Local<Array> result( NanNew<Array>( (uint32_t) dict_map.size() ) );
-
-  uint32_t count = 0;
-
-  for( Map<IP2LDictionaryElement>::type::const_iterator it = dict_map.begin();
-                                      it != dict_map.end(); ++it ) {
-    result->Set( count++, NanNew<String>( it->second->Name() ) );
-  }
-  return NanEscapeScope(result);
-}
-
 NAN_INLINE void Location::CreateDictionaryResultBranch(
                             const uint32_t mask,
                             const uint32_t branch_mask,
                             const uint32_t leaf_mask,
                             const Map<IP2LDictionaryElement>::type &branch_map,
-                            Handle<String> &indexLabel,
-                            Handle<String> &label,
+                            const Handle<String> &indexLabel,
+                            const Handle<String> &label,
                             Handle<Object> &result)
 {
   if ( (mask & branch_mask) != 0 ) {
@@ -319,10 +303,26 @@ NAN_INLINE void Location::CreateDictionaryResultElement(
                             const uint32_t mask,
                             const uint32_t leaf_mask,
                             const Map<IP2LDictionaryElement>::type &leaf_map,
-                            Handle<String> &label,
+                            const Handle<String> &label,
                             Handle<Object> &result)
 {
   if ( (mask & leaf_mask) != 0 ) {
     result->Set(label, CreateArrayResult(leaf_map) );
   }
+}
+
+Local<Array> Location::CreateArrayResult(
+                              const Map<IP2LDictionaryElement>::type &dict_map)
+{
+  NanEscapableScope();
+
+  Local<Array> result( NanNew<Array>( (uint32_t) dict_map.size() ) );
+
+  uint32_t index = 0;
+
+  for( Map<IP2LDictionaryElement>::type::const_iterator it = dict_map.begin();
+                                      it != dict_map.end(); ++it ) {
+    result->Set( index++, NanNew<String>( it->second->Name() ) );
+  }
+  return NanEscapeScope(result);
 }
