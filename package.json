@@ -8,6 +8,9 @@
     "type": "git",
     "url": "git://github.com/advertine/node-ip2location.git"
   },
+  "scripts": {
+    "test": "tap-prettify test/test.js"
+  },
   "main": "index.js",
   "engines": {
     "node": ">=0.8.0"
@@ -15,5 +18,8 @@
   "dependencies": {
     "nan": "~1.6"
   },
-  "devDependencies": {}
+  "devDependencies": {
+    "tap": "*",
+    "tap-prettify": "*"
+  }
 }
