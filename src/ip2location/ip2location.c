@@ -258,7 +258,7 @@ static uint32_t IP2LocationFindRowIPV4(IP2Location *loc, uint32_t ipno)
   uint32_t mid = 0;
   uint32_t low = 0;
 
-  uint32_t rowoffset;
+  uint32_t rowoffset = IP2L_NOT_FOUND;
 
   while (low <= high) {
     mid = (uint32_t)((low + high)/2);
@@ -280,7 +280,7 @@ static uint32_t IP2LocationFindRowIPV4(IP2Location *loc, uint32_t ipno)
     }
   }
 
-  return IP2L_NOT_FOUND;
+  return rowoffset;
 }
 
 static uint32_t IP2LocationFindRowIPV6(IP2Location *loc, ipv6le128_t *ip6no)
