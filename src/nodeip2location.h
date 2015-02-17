@@ -21,7 +21,7 @@ using namespace v8;
 #define LOCATION_DBMODE_CACHE  "cache"
 #define LOCATION_DBMODE_CLOSED "closed"
 
-#define LOCATION_ALL ((uint32_t)((1UL << IP2L_INDEX_MAX) - 1))
+#define LOCATION_ALL ( (uint32_t)(IP2L_MASK(IP2L_INDEX_MAX + 1) - 1) )
 
 class Location: public ObjectWrap {
   public:
@@ -30,7 +30,7 @@ class Location: public ObjectWrap {
     static Persistent<FunctionTemplate> constructor;
 
     static void Init(Handle<Object> exports);
-    Location(char *locdbpath, IP2LOCATION_ACCESS_TYPE mtype, char *shared);
+    Location( char *locdbpath, IP2LOCATION_ACCESS_TYPE mtype, char *shared );
     ~Location();
     void Close();
     static NAN_METHOD(New);
@@ -41,17 +41,42 @@ class Location: public ObjectWrap {
     static NAN_METHOD(CreateDictionary);
     static NAN_METHOD(GetDbInfo);
     static NAN_METHOD(Query);
+
   private:
-    static void MakeDictionaryItem(IP2Location *loc,
-                                  uint32_t rowoffset,
-                                  uint32_t mask,
-                                  Map<IP2LDictionary>::type &dict);
-    static void MakeDictionary(Map<IP2LDictionary>::type &dict,
-                              IP2Location *loc,
-                              uint32_t mask);
-    static void FreeDictionary(Map<IP2LDictionary>::type &dict);
-    static Local<Object> CreateDictionaryResult(const Map<IP2LDictionary>::type &dict, const uint32_t mask);
-    static Local<Array> CreateArrayResult(const Map<IP2LDictionary>::type &dict);
+    static void BuildDictionary( IP2LDictionary &dict,
+                                 IP2Location *loc,
+                                 uint32_t mask );
+    static void BuildDictionaryItem( IP2Location *loc,
+                                     uint32_t rowoffset,
+                                     uint32_t mask,
+                                     IP2LDictionary &dict );
+    template <IP2LOCATION_DATA_INDEX branch_index,
+              IP2L_DICT_TYPE branch_type,
+              IP2LOCATION_DATA_INDEX leaf_index>
+    NAN_INLINE static void BuildDictionaryBranchItem(
+                                                IP2Location *loc,
+                                                uint32_t rowoffset,
+                                                uint32_t mask,
+                                                IP2LDictionaryCountry *country,
+                                                char * const name);
+    static Local<Object> CreateDictionaryResult( const IP2LDictionary &dict,
+                                                 const uint32_t mask );
+    static Local<Array> CreateArrayResult(
+                                  const Map<IP2LDictionaryElement>::type &map);
+    NAN_INLINE static void CreateDictionaryResultBranch(
+                            const uint32_t mask,
+                            const uint32_t branch_mask,
+                            const uint32_t leaf_mask,
+                            const Map<IP2LDictionaryElement>::type &branch_map,
+                            Handle<String> &indexLabel,
+                            Handle<String> &label,
+                            Handle<Object> &result);
+    NAN_INLINE static void CreateDictionaryResultElement(
+                              const uint32_t mask,
+                              const uint32_t leaf_mask,
+                              const Map<IP2LDictionaryElement>::type &leaf_map,
+                              Handle<String> &label,
+                              Handle<Object> &result);
 };
 
 #endif /* HAVE_NODEIP2LOCATION_H */

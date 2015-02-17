@@ -3,7 +3,7 @@
 using namespace node;
 using namespace v8;
 
-#include "nodeip2ldict_result_impl.h"
+#include "nodeip2ldictbuilder_impl.h"
 
 static const char * const LOCATION_RESULT_KEYS[IP2L_INDEX_MAX + 1] = {
   "country_short",
@@ -191,23 +191,24 @@ NAN_METHOD(Location::CreateDictionary)
   NanScope();
 
   Location* location = ObjectWrap::Unwrap<Location>(args.This());
-  if (!location->iplocdb) {
+  if ( ! location->iplocdb ) {
     return NanThrowError("IP2LOCATION database is closed");
   }
+  if ( location->iplocdb->cache == NULL ) {
+    return NanThrowError("IP2LOCATION database should be in cache, mmap or shared mode");
+  }
 
-  uint32_t mode( LOCATION_ALL );
+  uint32_t mode(LOCATION_ALL);
 
   if ( args.Length() > 0 ) {
     mode = args[0]->Uint32Value();
   }
 
-  Map<IP2LDictionary>::type dict;
+  IP2LDictionary dict;
 
-  MakeDictionary(dict, location->iplocdb, mode);
+  BuildDictionary(dict, location->iplocdb, mode);
 
   Local<Object> result = CreateDictionaryResult(dict, mode);
-
-  FreeDictionary(dict);
 
   NanReturnValue(result);
 }

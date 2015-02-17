@@ -343,7 +343,7 @@ uint32_t IP2LocationFindRow(IP2Location *loc, char *ip)
 int IP2LocationRowString(IP2Location *loc,
                          IP2LOCATION_DATA_INDEX index,
                          uint32_t rowoffset,
-                         char *buff)
+                         char * const buff)
 {
   const unsigned char *data;
   if ( IP2L_DATA_STRING == IP2LocationRowData(loc, index, rowoffset, (const void **)&data) ) {
