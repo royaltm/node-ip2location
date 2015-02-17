@@ -3,34 +3,43 @@
 #endif
 #define HAVE_NODEIP2LDICTBUILDER_IMPL
 /*
-result = {
-  _index: ['AA', ..., 'ZZ']
-  'usagetype'
-  'netspeed'
-  'AA': {
-    'country_long': "AAAAaaaaa",
-    'country_short': "AA",
+
+dict = {
+  _index: [country1, ..., countryN]
+  country1: {
+    'country_long': "Full Country Name",
+    'country_short': country1,
     'region': {
-      _index: ['Region1', 'RegionN'],
-      Region1: ['City1', 'City2'],
+      '_index': [region1, ..., regionN],
+      region1: [city1, ..., cityN],
+      ...
+      regionN: [...]
     }
-    'isp': ['isp1', 'isp2'],
-    'domain': ['domain1', 'domain2'],
-    'zipcode': ['zipcode1', 'zipcode2'],
-    'timezone': ['timezone1', 'timezone2'],
-    'iddcode': [],
-    'areacode': [],
-    'weatherstationcode': {
-      'weatherstationname': []
+    'isp': [...],
+    'domain': [...],
+    'zipcode': [...],
+    'timezone': [...],
+    'iddcode': [...],
+    'areacode': [...],
+    'weatherstationname': [...], // or
+    'weatherstationname': {
+      '_index': [weatherstationname1, ..., weatherstationnameN]
+      weatherstationname1: [weatherstationcode],
+      ...
+      weatherstationnameN: [weatherstationcode]
+    },
+    'weatherstationcode': [...] // alternative if only WEATHERSTATIONCODE is provided
+    'mcc': [...], // or
+    'mcc': {
+      _index: [mcc1, ..., mccN],
+      mcc1: [mnc1, ..., mncN],
+      ...
+      mccN: [...],
     }
-    'mcc', {
-      _index: ['mcc1', 'mcc2'],
-      mcc1: {
-        mnc: [mnc1, mnc2]
-      }
-    }
-    'mobilebrand': []
-  }
+    'mobilebrand': [...]
+  },
+  ...
+  countryN: {...}
 }
 
 */
@@ -185,7 +194,6 @@ Local<Object> Location::CreateDictionaryResult( const IP2LDictionary &dict,
                 weatherstationcode( NanNew<String>("weatherstationcode") ),
                 weatherstationname( NanNew<String>("weatherstationname") ),
                 mcc( NanNew<String>("mcc") ),
-                mnc( NanNew<String>("mnc") ),
                 mobilebrand( NanNew<String>("mobilebrand") );
 
   const Map<IP2LDictionaryElement>::type &dict_map = dict.Children();
