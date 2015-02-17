@@ -2,6 +2,8 @@
 
 This is a complete re-write of database client library, optimized for speed.
 
+[![Build Status][BS img]][Build Status]
+
 There is no official binary database documentation so this code
 is based on the IP2Location C library from official site:
 
@@ -106,3 +108,5 @@ This addon is highly experimental, might not compile on many systems, so use at 
 
 LGPL
 
+[Build Status]: https://travis-ci.org/Advertine/node-ip2location
+[BS img]: https://travis-ci.org/Advertine/node-ip2location.svg
