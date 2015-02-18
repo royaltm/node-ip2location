@@ -67,7 +67,7 @@ function randipv6() {
 //47732.6968973747 ALL
 
 function test(testfun) {
-  console.log("ipv4 test x " + iter + " times");
+  console.log("\nipv4 test x " + iter + " times");
   var ms = ben(iter, function() {
     testfun(randip());
   });
@@ -76,7 +76,7 @@ function test(testfun) {
   console.log('query in: ' + ms + 'ms');
 
   if (location.ipv6) {
-    console.log("ipv6 test x " + iter + " times");
+    console.log("\nipv6 test x " + iter + " times");
     ms = ben(iter, function() {
       testfun(randipv6());
     });
@@ -99,6 +99,7 @@ if (location.ipv6) {
   console.log(location.query(ip, mask));
 }
 
+console.log('-------------------');
 console.log("pid: " + process.pid);
 console.log("mask: 0x" + (mask|0x100000).toString(16).substr(1));
 
@@ -111,6 +112,7 @@ location.close();
 
 ip2loc.IP2Location_init(file)
 
+console.log();
 console.log('-------------------');
 console.log("ip2location-nodejs:");
 
