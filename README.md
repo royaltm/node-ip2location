@@ -7,7 +7,7 @@ This is a complete re-write of database client library, optimized for speed.
 There is no official binary database documentation so this code
 is based on the IP2Location C library from official site:
 
-http://www.ip2location.com/developers/c
+http://www.ip2location.com/developers/c-7
 
 It's also inspired by [this](https://github.com/bolgovr/node-ip2location) library binding.
 
@@ -15,14 +15,14 @@ However this implementation does not need any external library.
 
 ## Installation
 
-    npm install wisdio/node-ip2location
+    npm install advertine/node-ip2location
 
 ## Package
 
     package.json:
 
     "dependencies": {
-      "node-ip2location": "wisdio/node-ip2location"
+      "node-ip2location": "advertine/node-ip2location"
     }
 
 ## Example
@@ -102,7 +102,7 @@ the database, with the second argument to `query()`.
 
 ## Notes
 
-This addon is highly experimental, might not compile on many systems, so use at your own risk.
+This module was tested on Linux (x64), OS X and MS Windows (x64 and x86).
 
 ## Licence
 
