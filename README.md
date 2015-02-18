@@ -4,14 +4,9 @@ This is a complete re-write of database client library, optimized for speed.
 
 [![Build Status][BS img]][Build Status]
 
-There is no official binary database documentation so this code
-is based on the IP2Location C library from official site:
+Based on the IP2Location C library from official site:
 
 http://www.ip2location.com/developers/c-7
-
-It's also inspired by [this](https://github.com/bolgovr/node-ip2location) library binding.
-
-However this implementation does not need any external library.
 
 ## Installation
 
@@ -108,5 +103,5 @@ This module was tested on Linux (x64), OS X and MS Windows (x64 and x86).
 
 LGPL
 
-[Build Status]: https://travis-ci.org/Advertine/node-ip2location
-[BS img]: https://travis-ci.org/Advertine/node-ip2location.svg
+[Build Status]: https://travis-ci.org/advertine/node-ip2location
+[BS img]: https://travis-ci.org/advertine/node-ip2location.svg
