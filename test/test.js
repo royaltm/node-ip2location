@@ -63,14 +63,26 @@ test("should have numeric constants", function(t) {
   t.end();
 });
 
-test("should open and close ip2location database", function(t) {
+test("should open and close ip2location databases", function(t) {
   var location = new Location(IP4DBNAME);
   t.type(location, Location);
   t.strictEqual(location.mode, "file");
   t.strictEqual(location.opened, true);
+  t.strictEqual(location.ipv6, false);
   location.close();
   t.strictEqual(location.opened, false);
   t.strictEqual(location.mode, "closed");
+  t.strictEqual(location.ipv6, false);
+
+  location = new Location(IP6DBNAME);
+  t.type(location, Location);
+  t.strictEqual(location.mode, "file");
+  t.strictEqual(location.opened, true);
+  t.strictEqual(location.ipv6, true);
+  location.close();
+  t.strictEqual(location.opened, false);
+  t.strictEqual(location.mode, "closed");
+  t.strictEqual(location.ipv6, false);
   t.end();
 });
 
