@@ -3,6 +3,8 @@
   "name": "node-ip2location",
   "description": "native ip2location bindings for node.js",
   "version": "0.0.1",
+  "license": "LGPL",
+  "contributors": [],
   "homepage": "https://github.com/advertine/node-ip2location",
   "repository": {
     "type": "git",
