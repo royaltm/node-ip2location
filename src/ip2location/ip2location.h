@@ -98,5 +98,6 @@ int IP2LocationRowString(IP2Location *loc,
                                 IP2LOCATION_DATA_INDEX index,
                                 uint32_t rowoffset,
                                 char * const buff);
+int IP2LocationDBhasIPV6(IP2Location *log);
 
 #endif /* HAVE_IP2LOCATION_H */

@@ -354,3 +354,8 @@ int IP2LocationRowString(IP2Location *loc,
   }
   return IP2L_NOT_FOUND;
 }
+
+int IP2LocationDBhasIPV6(IP2Location *loc)
+{
+  return ( loc != NULL && loc->v6databasecount >= 2 );
+}

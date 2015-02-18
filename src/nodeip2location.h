@@ -36,6 +36,7 @@ class Location: public ObjectWrap {
     static NAN_METHOD(New);
     static NAN_GETTER(GetDbMode);
     static NAN_GETTER(GetIsOpen);
+    static NAN_GETTER(HasIpv6);
     static NAN_METHOD(CloseDatabase);
     static NAN_METHOD(DeleteShared);
     static NAN_METHOD(CreateDictionary);

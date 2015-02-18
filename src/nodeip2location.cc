@@ -63,6 +63,9 @@ void Location::Init(Handle<Object> exports)
   i_t->SetAccessor( NanNew<String>("mode"), GetDbMode );
   i_t->SetAccessor( NanNew<String>("opened"), GetIsOpen );
 
+  Local<ObjectTemplate> proto = tpl->PrototypeTemplate();
+  proto->SetAccessor( NanNew<String>("ipv6"), HasIpv6 );
+
   for(int index = 0; index <= IP2L_INDEX_MAX; ++index) {
     tpl->Set( NanNew<String>(LOCATION_CONST_KEYS[index]),
               NanNew<Int32>(1 << index),
@@ -160,6 +163,13 @@ NAN_GETTER(Location::GetIsOpen)
   NanScope();
   Location *location = ObjectWrap::Unwrap<Location>( args.This() );
   NanReturnValue( NanNew<Boolean>( location->iplocdb != NULL ) );
+}
+
+NAN_GETTER(Location::HasIpv6)
+{
+  NanScope();
+  Location *location = ObjectWrap::Unwrap<Location>( args.This() );
+  NanReturnValue( NanNew<Boolean>( IP2LocationDBhasIPV6(location->iplocdb) != 0 ) );
 }
 
 NAN_METHOD(Location::CloseDatabase)
