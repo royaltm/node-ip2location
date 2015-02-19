@@ -80,6 +80,7 @@ void Location::Init(Handle<Object> exports)
   NODE_SET_PROTOTYPE_METHOD(tpl, "info", GetDbInfo);
   NODE_SET_PROTOTYPE_METHOD(tpl, "deleteShared", DeleteShared);
   NODE_SET_PROTOTYPE_METHOD(tpl, "createDictionary", CreateDictionary);
+  NODE_SET_PROTOTYPE_METHOD(tpl, "getAll", GetAll);
 
   exports->Set( NanNew<String>("Location"), NanNew<FunctionTemplate>(constructor)->GetFunction() );
 }
@@ -315,6 +316,137 @@ NAN_METHOD(Location::Query)
   }
 
   NanReturnNull();
+}
+
+void Location::SetResultErrorStatus(Handle<Object> &result,
+                                         const char * const status, bool setIP)
+{
+  NanScope();
+
+  Local<String> value( NanNew<String>("?") );
+
+  if (setIP) {
+    result->Set( NanNew<String>("ip"), value );
+    result->Set( NanNew<String>("ip_no"), value );
+  }
+
+  for (uint8_t index = 0; index <= IP2L_INDEX_MAX; ++index ) {
+    result->Set( NanNew<String>(LOCATION_RESULT_KEYS[index]), value );
+  }
+
+  result->Set( NanNew<String>("status"), NanNew<String>(status) );
+}
+
+NAN_METHOD(Location::GetAll)
+{
+  NanScope();
+
+  Local<Object> result = NanNew<Object>();
+
+  Location *location = ObjectWrap::Unwrap<Location>( args.This() );
+
+  if ( ! location->iplocdb ) {
+    SetResultErrorStatus(result, "MISSING_FILE");
+    NanReturnValue(result);
+  }
+
+  Local<Value> ip;
+
+  if ( args.Length() < 1 ) {
+    ip = NanUndefined();
+  } else {
+    ip = args[0];
+  }
+
+  ipv6le128_t ipaddr;
+
+  int iptype = IP2LocationIP2No( *NanUtf8String(ip), &ipaddr );
+
+  uint32_t dboffset;
+
+  switch( iptype ) {
+    case 6:
+      if ( IP2LocationDBhasIPV6(location->iplocdb) ) {
+        char ipnostr[IP2L_ULONG128_DECIMAL_SIZE];
+        int ipnolen = IP2LocationULong128ToDecimal(ipaddr.ui32, ipnostr);
+        result->Set( NanNew<String>("ip"), ip );
+        result->Set( NanNew<String>("ip_no"), NanNew(ipnostr, ipnolen) );
+        dboffset = IP2LocationFindRowIPV6(location->iplocdb, &ipaddr);
+      } else {
+        SetResultErrorStatus(result, "IPV6_NOT_SUPPORTED");
+        NanReturnValue(result);
+      }
+
+      break;
+
+    case 4:
+      {
+        char ipstr[16];
+        int iplen = IP2LocationIPv4Str(&ipaddr, ipstr);
+        result->Set( NanNew<String>("ip"), NanNew(ipstr, iplen) );
+        result->Set( NanNew<String>("ip_no"), NanNew<Uint32>(ipaddr.ipv4.addr) );
+        dboffset = IP2LocationFindRowIPV4(location->iplocdb, ipaddr.ipv4.addr);
+      }
+      break;
+
+    default:
+      SetResultErrorStatus(result, "INVALID_IP_ADDRESS");
+      NanReturnValue(result);
+  }
+
+  if ( dboffset == IP2L_NOT_FOUND ) {
+
+    SetResultErrorStatus(result, "IP_ADDRESS_NOT_FOUND", false);
+
+  } else {
+
+    uint32_t mode = location->iplocdb->mode_mask;
+
+    Local<String> nosupport( NanNew<String>(LOCATION_MSG_NOT_SUPPORTED) );
+
+    for ( uint8_t index = 0; index <= IP2L_INDEX_MAX; ++index ) {
+      const unsigned char *data;
+      Local<Value> value;
+
+      if ( (mode & 1) != 0 ) {
+        switch ( IP2LocationRowData(location->iplocdb,
+                                    static_cast<IP2LOCATION_DATA_INDEX>(index),
+                                    dboffset,
+                                    (const void **)&data ) ) {
+          case IP2L_DATA_STRING:
+            value = NanNew<String>( (const char *)data + 1, data[0] );
+            break;
+          case IP2L_DATA_FLOAT:
+            value = NanNew<Number>( (const double)(*(const float *)data) );
+            break;
+          default:
+            ;
+        }
+      } else {
+        switch( static_cast<IP2LOCATION_DATA_INDEX>(index) ) {
+          case IP2L_LATITUDE_INDEX:
+          case IP2L_LONGITUDE_INDEX:
+          case IP2L_ELEVATION_INDEX:
+            value = NanNew<Number>(0.0);
+            break;
+          default:
+            ;
+        }
+      }
+
+      if ( value.IsEmpty() ) {
+        result->Set( NanNew<String>(LOCATION_RESULT_KEYS[index]), nosupport );
+      } else {
+        result->Set( NanNew<String>(LOCATION_RESULT_KEYS[index]), value );
+      }
+
+      mode >>= 1;
+    }
+
+    result->Set( NanNew<String>("status"), NanNew<String>("OK") );
+  }
+
+  NanReturnValue(result);
 }
 
 Persistent<FunctionTemplate> Location::constructor;

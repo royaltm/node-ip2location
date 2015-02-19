@@ -20,6 +20,10 @@ using namespace v8;
 #define LOCATION_DBMODE_SHARED "shared"
 #define LOCATION_DBMODE_CACHE  "cache"
 #define LOCATION_DBMODE_CLOSED "closed"
+#define LOCATION_MSG_NOT_SUPPORTED \
+  "This method is not applicable for current IP2Location binary data file." \
+  " Please upgrade your subscription package to install new data file."
+
 
 #define LOCATION_ALL ( (uint32_t)(IP2L_MASK(IP2L_INDEX_MAX + 1) - 1) )
 
@@ -42,8 +46,12 @@ class Location: public ObjectWrap {
     static NAN_METHOD(CreateDictionary);
     static NAN_METHOD(GetDbInfo);
     static NAN_METHOD(Query);
+    static NAN_METHOD(GetAll);
 
   private:
+    static void SetResultErrorStatus( Handle<Object> &result,
+                                      const char * const status,
+                                      bool setIP = true );
     static void BuildDictionary( IP2LDictionary &dict,
                                  IP2Location *loc,
                                  uint32_t mask );
