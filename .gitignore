@@ -13,3 +13,7 @@ sftp-config.json
 /build
 *.o
 *.so
+*.BIN
+*.bin
+*.ZIP
+*.zip
