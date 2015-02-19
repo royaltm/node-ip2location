@@ -1,7 +1,8 @@
-Node.js native module for IP2Location
-=====================================
+Native IP2Location library for node.js
+======================================
 
-This is a complete re-write of IP2LOCATION database client, built for speed.
+This library is a complete re-write of IP2LOCATION database client.
+Built for speed.
 
 [![Build Status][BS img]][Build Status]
 
@@ -11,20 +12,12 @@ http://www.ip2location.com/developers/c-7
 
 ## Installation
 
-    npm install advertine/node-ip2location
-
-## Package
-
-    package.json:
-
-    "dependencies": {
-      "node-ip2location": "advertine/node-ip2location"
-    }
+    npm install ip2location-native
 
 ## Usage
 
 ```js
-    Location = require('node-ip2location')
+    Location = require('ip2location-native')
     location = new Location('path/to/ip2location_database.bin', 'mmap')
 
     location.query('8.8.8.8')
@@ -72,7 +65,7 @@ is done with blocking IO.
     location.mode == "shared"
 ```
 
-Each consecutive call to `new Location(dbname, "shared")` will try to re-open
+Every other process calling `new Location(dbname, "shared")` will try to re-open
 existing shared memory.
 
 The default name used for the shared memory is "/IP2location_Shm".
@@ -101,6 +94,10 @@ only after the last process is detached from it (closes database).
 
 Please refer to `shm_open` and `shm_unlink` man pages for more info.
 
+On Windows:
+
+Last process calling `location.close()` will delete the shared memory.
+
 ## Performance
 
 On tested system the library in default IO mode with IP2LOCATION-LITE-5
@@ -117,19 +114,20 @@ node test/bench IP2LOCATION-DATABASE.BIN access_mode iterations mask
 
 ## Drop-in replacement
 
-The drop-in module allows you to replace official IP2Location library without
-touching your code, except for:
+The drop-in module allows you to replace the official IP2Location library
+without touching your code, except for:
 
 ```js
-    var ip2location = require('node-ip2location/dropin')
+    var ip2location = require('ip2location-native/dropin')
+
     ip2location.IP2Location_init('path/to/ip2location_database.bin')
     ip2location.IP2Location_get_all('8.8.8.8')
 ```
 
 ##Database dictionary
 
-It is possible to dump database dictionaries using `createDictionary([FIELD_MASK])`
-method.
+With this module it's possible to dump database dictionaries using
+`createDictionary([FIELD_MASK])` method.
 
 ```js
   var dict = location.createDictionary(Location.COUNTRY_LONG|Location.REGION|Location.CITY)
@@ -142,7 +140,7 @@ method.
 ## Notes
 
 This module was tested on Linux (x64) and MS Windows (x64 and x86) with
-node 0.8, 0.10, 0.12 and io.js.
+node 0.8, 0.10, 0.11, 0.12 and io.js.
 
 ## Licence
 

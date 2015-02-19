@@ -1,9 +1,14 @@
 {
-  "author": "Rafał Michalski <royal@advertine.com>",
-  "name": "node-ip2location",
-  "description": "native ip2location bindings for node.js",
-  "version": "0.0.1",
+  "name": "ip2location-native",
+  "description": "native IP2Location library for node.js",
+  "keywords": [
+    "geo",
+    "ip2geo",
+    "ip2location"
+  ],
+  "version": "1.0.0",
   "license": "LGPL",
+  "author": "Rafał Michalski <royal@advertine.com>",
   "contributors": [],
   "homepage": "https://github.com/advertine/node-ip2location",
   "repository": {
