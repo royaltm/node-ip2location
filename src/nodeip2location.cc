@@ -300,12 +300,10 @@ NAN_METHOD(Location::Query)
 
   if ( dboffset != IP2L_NOT_FOUND ) {
     Local<Object> result = NanNew<Object>();
-    uint8_t index = 0;
-    uint32_t mask = 1;
 
-    while ( mode != 0 ) {
+    for ( uint8_t index = 0; mode != 0; ++index ) {
       const unsigned char *data;
-      if ( (mode & mask) != 0 ) {
+      if ( (mode & 1) != 0 ) {
         Local<Value> value;
         switch ( IP2LocationRowData(location->iplocdb,
                                     static_cast<IP2LOCATION_DATA_INDEX>(index),
@@ -324,9 +322,7 @@ NAN_METHOD(Location::Query)
           result->Set( NanNew<String>(LOCATION_RESULT_KEYS[index]), value );
       }
 
-      mode &= ~mask;
-      mask <<= 1;
-      ++index;
+      mode >>= 1;
     }
 
     NanReturnValue(result);
