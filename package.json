@@ -6,7 +6,7 @@
     "ip2geo",
     "ip2location"
   ],
-  "version": "1.0.0",
+  "version": "1.0.1",
   "license": "LGPL",
   "author": "Rafał Michalski <royal@advertine.com>",
   "contributors": [],
