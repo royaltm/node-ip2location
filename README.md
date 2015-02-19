@@ -10,6 +10,8 @@ Data structures learnt from the IP2Location C library:
 
 http://www.ip2location.com/developers/c-7
 
+Sample binary databases are available [here][ip2Location-devel-db].
+
 ## Installation
 
     npm install ip2location-native
@@ -150,3 +152,4 @@ LGPL
 [BS img]: https://travis-ci.org/advertine/node-ip2location.svg
 [ip2location-nodejs]: http://www.ip2location.com/developers/nodejs
 [ip2location-nodejs-github]: https://github.com/ip2location-nodejs/IP2Location
+[ip2Location-devel-db]: http://www.ip2location.com/developers#sample_ip2location_databases_bin
