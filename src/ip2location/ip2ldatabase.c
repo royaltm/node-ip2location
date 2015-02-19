@@ -3,7 +3,6 @@
 #ifndef WIN32
 #  include <unistd.h>
 #  include <sys/mman.h>
-#  include <netinet/in.h>
 #else
 #ifdef WIN32
 #  include <windows.h>
