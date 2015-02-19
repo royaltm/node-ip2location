@@ -4,8 +4,9 @@ Native IP2Location library for node.js
 This library is a complete re-write of IP2LOCATION database client.
 Built for speed.
 
-[![Build Status][BS img]][Build Status]
 [![NPM][NPM img]][NPM Status]
+
+[![Build Status][BS img]][Build Status]
 
 Data structures learnt from the IP2Location C library:
 
