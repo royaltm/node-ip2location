@@ -5,6 +5,7 @@ This library is a complete re-write of IP2LOCATION database client.
 Built for speed.
 
 [![Build Status][BS img]][Build Status]
+[![NPM][NPM img]][NPM Status]
 
 Data structures learnt from the IP2Location C library:
 
@@ -158,6 +159,8 @@ LGPL
 
 [Build Status]: https://travis-ci.org/advertine/node-ip2location
 [BS img]: https://travis-ci.org/advertine/node-ip2location.svg
+[NPM img]: https://nodei.co/npm/ip2location-native.png?compact=true
+[NPM Status]: https://nodei.co/npm/ip2location-native/
 [ip2location-nodejs]: http://www.ip2location.com/developers/nodejs
 [ip2location-nodejs-github]: https://github.com/ip2location-nodejs/IP2Location
 [ip2Location-devel-db]: http://www.ip2location.com/developers#sample_ip2location_databases_bin
