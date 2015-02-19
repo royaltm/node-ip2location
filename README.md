@@ -84,7 +84,7 @@ However you are free to pick another (the name must begin with a slash - "/")
     location.info().sharedname == "/MyDatabase1"
 ```
 
-### On POSIX sytems:
+#### On POSIX sytems:
 
 A call to `location.close()` will not delete the shared memory, it will only
 detach process from it. To delete the shared memory call:
