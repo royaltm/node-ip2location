@@ -128,7 +128,7 @@ NAN_METHOD(Location::New)
       } else if ( ! strcmp(*stype, LOCATION_DBMODE_MMAP) ) {
         mtype = IP2LOCATION_FILE_MMAP;
         dbmode = LOCATION_DBMODE_MMAP;
-      } else if ( ! strcmp(*stype, "/") ){
+      } else if ( ! strncmp(*stype, "/", 1) ) {
         mtype = IP2LOCATION_SHARED_MEMORY;
         dbmode = LOCATION_DBMODE_SHARED;
         shared = *stype;
