@@ -11,7 +11,7 @@
     "url": "git://github.com/advertine/node-ip2location.git"
   },
   "scripts": {
-    "test": "tap-prettify test/test.js"
+    "test": "tap-prettify test/test.js test/test.dropin.js"
   },
   "main": "index.js",
   "engines": {
