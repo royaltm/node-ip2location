@@ -2,7 +2,8 @@
 var ben = require('ben')
 , Location = require('..')
 , assert = require('assert')
-, ip2loc = require("ip2location-nodejs");
+, ip2loc = require('ip2location-nodejs')
+, dropin = require('../dropin')
    
 if (process.argv.length < 3) {
   console.log('usage: node ' + 
@@ -30,11 +31,10 @@ function parseMask(arg) {
 }
 
 var file = process.argv[2]
-  , mode = process.argv[3]
+  , mode = process.argv[3] || 'file'
   , iter = (process.argv[4]|0) || 10000
   , mask = parseMask(process.argv[5])
   , location = new Location(file, mode)
-  , IP2Location_get_all = ip2loc.IP2Location_get_all
   ;
 
 var random = Math.random;
@@ -52,22 +52,10 @@ function randipv6() {
           (random()*0x10000|0+0x10000).toString(16).substr(1)].join(":");
 }
 
-//461254.6125461254 C R C
-//397298.3710766786 C R C S
-//270270.2702702703 ALL
-//45516.61356395084 ALL
-
-
-//cache
-//504032.2580645161 C R C
-//444444.4444444444 C R C S
-//373552.4841240194 ALL
-//file
-//50175.61465127947 C R C S
-//47732.6968973747 ALL
+var hasipv6 = location.ipv6;
 
 function test(testfun) {
-  console.log("\nipv4 test x " + iter + " times");
+  console.log("ipv4 test x " + iter + " times");
   var ms = ben(iter, function() {
     testfun(randip());
   });
@@ -75,7 +63,7 @@ function test(testfun) {
   console.log('query/ms: ' + (1 / ms).toFixed(4));
   console.log('query in: ' + ms + 'ms');
 
-  if (location.ipv6) {
+  if (hasipv6) {
     console.log("\nipv6 test x " + iter + " times");
     ms = ben(iter, function() {
       testfun(randipv6());
@@ -110,10 +98,24 @@ test(function(ip) { location.query(ip, mask); });
 
 location.close();
 
-ip2loc.IP2Location_init(file)
+console.log();
+
+dropin.IP2Location_init(file, mode);
+console.log('-------------------');
+console.log("ip2location dropin:");
+console.log("\nIP2Location_get_all()");
+test(dropin.IP2Location_get_all);
+console.log("\nIP2Location_get_country_short()");
+test(dropin.IP2Location_get_country_short);
+
+dropin.IP2Location_init();
 
 console.log();
+
+ip2loc.IP2Location_init(file)
 console.log('-------------------');
 console.log("ip2location-nodejs:");
-
-test(IP2Location_get_all);
+console.log("\nIP2Location_get_all()");
+test(ip2loc.IP2Location_get_all);
+console.log("\nIP2Location_get_country_short()");
+test(ip2loc.IP2Location_get_country_short.bind(ip2loc));
