@@ -141,7 +141,9 @@ NAN_METHOD(Location::New)
     } else {
       location = new Location(*locdbpath, mtype);
     }
-    if (!location->iplocdb) {
+
+    if ( ! location->iplocdb ) {
+      delete location;
       return NanThrowError("could not open IP2LOCATION database");
     }
 
