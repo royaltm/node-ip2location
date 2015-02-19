@@ -247,7 +247,7 @@ int IP2LocationRowData(IP2Location *loc,
   return IP2L_NOT_FOUND;
 }
 
-static uint32_t IP2LocationFindRowIPV4(IP2Location *loc, uint32_t ipno)
+uint32_t IP2LocationFindRowIPV4(IP2Location *loc, uint32_t ipno)
 {
   uint32_t ipfrom, ipto;
   FILE *handle = loc->filehandle;
@@ -283,7 +283,7 @@ static uint32_t IP2LocationFindRowIPV4(IP2Location *loc, uint32_t ipno)
   return rowoffset;
 }
 
-static uint32_t IP2LocationFindRowIPV6(IP2Location *loc, ipv6le128_t *ip6no)
+uint32_t IP2LocationFindRowIPV6(IP2Location *loc, ipv6le128_t *ip6no)
 {
   ipv6le128_t ip6from, ip6to;
   FILE *handle = loc->filehandle;
