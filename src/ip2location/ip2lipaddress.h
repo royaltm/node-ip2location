@@ -15,7 +15,12 @@ typedef struct ipv6le128 {
   };
 } ipv6le128_t;
 
-int IP2LocationIPv6Cmp(ipv6le128_t *a, ipv6le128_t *b);
-int IP2LocationIP2No(char* ipaddr, ipv6le128_t *ipv6);
+
+#define IP2L_ULONG128_DECIMAL_SIZE 40
+
+int IP2LocationIPv6Cmp(const ipv6le128_t *a, const ipv6le128_t *b);
+int IP2LocationIP2No(const char* ipaddr, ipv6le128_t *ipv6);
+int IP2LocationIPv4Str(const ipv6le128_t *ip, char out[16]);
+int IP2LocationULong128ToDecimal(const uint32_t bint[4], char out[IP2L_ULONG128_DECIMAL_SIZE]);
 
 #endif /* HAVE_IP2LOC_IPADDRESS_H */
