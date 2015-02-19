@@ -104,7 +104,7 @@ On tested system the library in default IO mode with IP2LOCATION-LITE-5
 database spends on average 25µs per ip lookup returning all available record
 entities. With caching enabled it speeds up to 5µs / lookup (~200 000 / s).
 
-This is about at least 200 times faster then the legacy [ip2location-nodejs](https://github.com/ip2location-nodejs/IP2Location) implementation in js.
+This is about at least 200 times faster then the pure js [IP2Location module][ip2location-nodejs-github].
 Further speed up is available by limiting the set of fields retrieved from
 the database with the second argument to `query()`.
 
@@ -114,7 +114,7 @@ node test/bench IP2LOCATION-DATABASE.BIN access_mode iterations mask
 
 ## Drop-in replacement
 
-The drop-in module allows you to replace the official IP2Location library
+The drop-in module allows you to replace the official [IP2Location library][ip2location-nodejs]
 without touching your code, except for:
 
 ```js
@@ -148,3 +148,5 @@ LGPL
 
 [Build Status]: https://travis-ci.org/advertine/node-ip2location
 [BS img]: https://travis-ci.org/advertine/node-ip2location.svg
+[ip2location-nodejs]: http://www.ip2location.com/developers/nodejs
+[ip2location-nodejs-github]: https://github.com/ip2location-nodejs/IP2Location
