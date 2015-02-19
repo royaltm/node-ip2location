@@ -134,6 +134,8 @@ without touching your code, except for:
 
 ##Database dictionary
 
+Do you want to know all available unique location property values?
+Sorted, grouped by property type and structured? No problem.
 With this module it's possible to dump database dictionaries using
 `createDictionary([FIELD_MASK])` method.
 
