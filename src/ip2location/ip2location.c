@@ -4,6 +4,7 @@
 
 #define IP2L_MAX_DBTYPE 24
 #define IP2L_BASEADDR 65
+#define IP2L_MAXDBSIZE 0xFFFFFFFE
 
 static const uint8_t IP2L_DB_POSITIONS[IP2L_DB_POSITION_COUNT][25] = {
   {0, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2}, // COUNTRY_POSITION[25]
@@ -32,6 +33,7 @@ static int IP2LocationInit(IP2Location *loc);
 static void IP2LocationFree(IP2Location *loc)
 {
   free(loc->filename);
+  free(loc->cache);
   free(loc);
 }
 
@@ -53,7 +55,7 @@ IP2Location *IP2LocationOpen(char *db, IP2LOCATION_ACCESS_TYPE mtype, char *shar
 
   dbfilesize = statb.st_size;
 
-  if ( dbfilesize < IP2L_BASEADDR ) {
+  if ( dbfilesize < IP2L_BASEADDR || dbfilesize > IP2L_MAXDBSIZE ) {
     fclose(filehandle);
     return NULL;
   }
@@ -63,8 +65,6 @@ IP2Location *IP2LocationOpen(char *db, IP2LOCATION_ACCESS_TYPE mtype, char *shar
 
   loc->filename = strdup(db);
   loc->filesize = dbfilesize;
-  loc->cache = NULL;
-  loc->mml_node = NULL;
 
   switch (mtype) {
     case IP2LOCATION_FILE_IO:
@@ -90,8 +90,11 @@ IP2Location *IP2LocationOpen(char *db, IP2LOCATION_ACCESS_TYPE mtype, char *shar
 
   if (initFailed == 0) {
 
-    if (loc->mml_node != NULL)
-      loc->cache = loc->mml_node->mem_ptr;
+    if (loc->mml_node != NULL) {
+      loc->cache = malloc( sizeof(IP2LCacheHandler) );
+      loc->cache->memory = loc->mml_node->mem_ptr;
+      loc->cache->size = (uint32_t) dbfilesize;
+    }
     loc->filehandle = filehandle;
     loc->access_type = mtype;
 
@@ -129,7 +132,7 @@ int IP2LocationDeleteShared(IP2Location *loc)
 
 static int IP2LocationInit(IP2Location *loc)
 {
-  uint8_t *cache = loc->cache;
+  IP2LCacheHandler *cache = loc->cache;
   FILE *file = loc->filehandle;
   uint8_t dbtype = IP2LocationRead8(file,  cache, 1);
   if (dbtype > IP2L_MAX_DBTYPE)
@@ -251,7 +254,7 @@ uint32_t IP2LocationFindRowIPV4(IP2Location *loc, uint32_t ipno)
 {
   uint32_t ipfrom, ipto;
   FILE *handle = loc->filehandle;
-  uint8_t *cache = loc->cache;
+  IP2LCacheHandler *cache = loc->cache;
   uint32_t baseaddr = loc->databaseaddr;
   uint32_t columnsize = loc->databasecolumn * 4; /* 4 bytes each column */
   uint32_t high = loc->databasecount - 2;
@@ -287,7 +290,7 @@ uint32_t IP2LocationFindRowIPV6(IP2Location *loc, ipv6le128_t *ip6no)
 {
   ipv6le128_t ip6from, ip6to;
   FILE *handle = loc->filehandle;
-  uint8_t *cache = loc->cache;
+  IP2LCacheHandler *cache = loc->cache;
   uint32_t baseaddr = loc->v6databaseaddr;
   /* 4 bytes each column, except IPFrom column which is 16 bytes */
   uint32_t columnsize = 16 + ( (loc->databasecolumn - 1) * 4 );

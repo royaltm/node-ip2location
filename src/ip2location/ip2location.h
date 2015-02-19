@@ -68,7 +68,7 @@ typedef struct {
   char *filename;
   FILE *filehandle;
   size_t filesize;
-  uint8_t *cache;
+  IP2LCacheHandler *cache;
   IP2LMemoryMapList *mml_node;
   uint32_t databasecount;
   uint32_t databaseaddr;

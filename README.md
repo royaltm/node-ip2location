@@ -114,6 +114,12 @@ the database with the second argument to `query()`.
 node test/bench IP2LOCATION-DATABASE.BIN access_mode iterations mask
 ```
 
+## Resilient database access
+
+The library takes additional precaution when dealing with database files.
+The format verification routine prevents accessing wrong format or corrupted
+files.
+
 ## Drop-in replacement
 
 The drop-in module allows you to replace the official [IP2Location library][ip2location-nodejs]
