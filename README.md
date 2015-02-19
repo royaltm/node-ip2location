@@ -5,7 +5,7 @@ This is a complete re-write of IP2LOCATION database client, built for speed.
 
 [![Build Status][BS img]][Build Status]
 
-Data structures learnt from the IP2Location C library from the official site:
+Data structures learnt from the IP2Location C library:
 
 http://www.ip2location.com/developers/c-7
 
@@ -48,8 +48,8 @@ http://www.ip2location.com/developers/c-7
 ## Caching
 
 The second, optional constructor argument configures database access mode.
-The default mode is "file" - without caching. It is memory conserving but
-reads database with blocking IO only.
+The default mode is "file" - without caching. It conserves memory but reading
+is done with blocking IO.
 
 * "cache" loads the whole database into a local memory:
 
@@ -109,7 +109,7 @@ entities. With caching enabled it speeds up to 5µs / lookup (~200 000 / s).
 
 This is about at least 200 times faster then the legacy [ip2location-nodejs](https://github.com/ip2location-nodejs/IP2Location) implementation in js.
 Further speed up is available by limiting the set of fields retrieved from
-the database, with the second argument to `query()`.
+the database with the second argument to `query()`.
 
 ```
 node test/bench IP2LOCATION-DATABASE.BIN access_mode iterations mask
@@ -117,7 +117,7 @@ node test/bench IP2LOCATION-DATABASE.BIN access_mode iterations mask
 
 ## Drop-in replacement
 
-The drop-in module allows you to replace official IP2Location library, without
+The drop-in module allows you to replace official IP2Location library without
 touching your code, except for:
 
 ```js
@@ -126,7 +126,18 @@ touching your code, except for:
     ip2location.IP2Location_get_all('8.8.8.8')
 ```
 
-line.
+##Database dictionary
+
+It is possible to dump database dictionaries using `createDictionary([FIELD_MASK])`
+method.
+
+```js
+  var dict = location.createDictionary(Location.COUNTRY_LONG|Location.REGION|Location.CITY)
+  dict._index.indexOf('PL') == 174
+  dict.PL.country_long == 'Poland'
+  dict.PL.region._index.indexOf('Mazowieckie') == 6
+  dict.PL.region.Mazowieckie.indexOf('Warsaw') == 251
+```
 
 ## Notes
 
