@@ -34,7 +34,7 @@ class Location: public ObjectWrap {
     static Persistent<FunctionTemplate> constructor;
 
     static void Init(Handle<Object> exports);
-    Location( char *locdbpath, IP2LOCATION_ACCESS_TYPE mtype, char *shared );
+    Location( char *locdbpath, IP2LOCATION_ACCESS_TYPE mtype, char *shared = NULL );
     ~Location();
     void Close();
     static NAN_METHOD(New);

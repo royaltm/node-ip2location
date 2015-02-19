@@ -109,37 +109,46 @@ NAN_METHOD(Location::New)
   NanScope();
 
   if ( args.IsConstructCall() ) {
+
     NanUtf8String locdbpath( args[0] );
     Location* location;
     IP2LOCATION_ACCESS_TYPE mtype(IP2LOCATION_FILE_IO);
-    const char *dbmode(LOCATION_DBMODE_FILE);
-    if (args.Length() > 1) {
+
+    const char *dbmode = LOCATION_DBMODE_FILE;
+
+    if ( args.Length() > 1 ) {
       char *shared = NULL;
       NanUtf8String stype( args[1] );
-      if (strncmp(*stype, LOCATION_DBMODE_SHARED, sizeof(LOCATION_DBMODE_SHARED)) == 0) {
+      if ( ! strcmp(*stype, LOCATION_DBMODE_SHARED) ) {
         mtype = IP2LOCATION_SHARED_MEMORY;
         dbmode = LOCATION_DBMODE_SHARED;
-      } else if (strncmp(*stype, LOCATION_DBMODE_CACHE, sizeof(LOCATION_DBMODE_CACHE)) == 0) {
+      } else if ( ! strcmp(*stype, LOCATION_DBMODE_CACHE) ) {
         mtype = IP2LOCATION_CACHE_MEMORY;
         dbmode = LOCATION_DBMODE_CACHE;
-      } else if (strncmp(*stype, LOCATION_DBMODE_MMAP, sizeof(LOCATION_DBMODE_MMAP)) == 0) {
+      } else if ( ! strcmp(*stype, LOCATION_DBMODE_MMAP) ) {
         mtype = IP2LOCATION_FILE_MMAP;
         dbmode = LOCATION_DBMODE_MMAP;
-      } else if (strncmp(*stype, "/", 1) == 0){
+      } else if ( ! strcmp(*stype, "/") ){
         mtype = IP2LOCATION_SHARED_MEMORY;
         dbmode = LOCATION_DBMODE_SHARED;
         shared = *stype;
+      } else if ( strcmp(*stype, LOCATION_DBMODE_FILE) ) {
+        return NanThrowError("unknown IP2LOCATION access mode, should be "
+                             "\"file\", \"cache\", \"mmap\" or \"shared\"");
       }
+
       location = new Location(*locdbpath, mtype, shared);
     } else {
-      location = new Location(*locdbpath, mtype, NULL);
+      location = new Location(*locdbpath, mtype);
     }
     if (!location->iplocdb) {
       return NanThrowError("could not open IP2LOCATION database");
     }
+
     location->dbmode = dbmode;
     location->Wrap( args.This() );
     NanReturnValue( args.This() );
+
   } else {
     int argc = args.Length();
     if (argc > 2) argc = 2;
@@ -205,11 +214,11 @@ NAN_METHOD(Location::CreateDictionary)
   if ( ! location->iplocdb ) {
     return NanThrowError("IP2LOCATION database is closed");
   }
-  if ( location->iplocdb->cache == NULL ) {
+  if ( location->iplocdb->mml_node == NULL ) {
     return NanThrowError("IP2LOCATION database should be in cache, mmap or shared mode");
   }
 
-  uint32_t mode(LOCATION_ALL);
+  uint32_t mode = LOCATION_ALL;
 
   if ( args.Length() > 0 ) {
     mode = args[0]->Uint32Value();
@@ -227,9 +236,12 @@ NAN_METHOD(Location::CreateDictionary)
 NAN_METHOD(Location::GetDbInfo)
 {
   NanScope();
+
   Location* location = ObjectWrap::Unwrap<Location>( args.This() );
+
   IP2Location *iplocdb = location->iplocdb;
   Local<Object> info = NanNew<Object>();
+
   if (iplocdb) {
     info->Set( NanNew<String>("filename"), NanNew<String>(iplocdb->filename) );
     info->Set( NanNew<String>("filesize"), NanNew<Uint32>( (uint32_t) iplocdb->filesize) );
@@ -243,6 +255,7 @@ NAN_METHOD(Location::GetDbInfo)
     info->Set( NanNew<String>("databaseaddr"), NanNew<Int32>(iplocdb->databaseaddr) );
     info->Set( NanNew<String>("v6databasecount"), NanNew<Int32>(iplocdb->v6databasecount) );
     info->Set( NanNew<String>("v6databaseaddr"), NanNew<Int32>(iplocdb->v6databaseaddr) );
+
     if (iplocdb->mml_node != NULL) {
       info->Set(NanNew<String>("cacheoccupants"), NanNew<Int32>(iplocdb->mml_node->count));
       info->Set(NanNew<String>("cachesize"), NanNew<Uint32>( (uint32_t) iplocdb->mml_node->mem_size) );
@@ -251,10 +264,12 @@ NAN_METHOD(Location::GetDbInfo)
         info->Set(NanNew<String>("sharedname"), NanNew<String>(iplocdb->mml_node->name));
       }
     }
+
     NanReturnValue(info);
-  } else {
-    NanReturnNull();
+
   }
+
+  NanReturnNull();
 }
 
 NAN_METHOD(Location::Query)
@@ -273,7 +288,7 @@ NAN_METHOD(Location::Query)
 
   NanUtf8String ip( args[0] );
 
-  uint32_t mode( location->iplocdb->mode_mask );
+  uint32_t mode = location->iplocdb->mode_mask;
 
   if ( args.Length() > 1 ) {
     mode &= args[1]->Uint32Value();
