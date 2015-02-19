@@ -14,11 +14,13 @@ http://www.ip2location.com/developers/c-7
 
 Sample binary databases are available [here][ip2Location-devel-db].
 
-## Installation
+Installation
+------------
 
     npm install ip2location-native
 
-## Usage
+Usage
+-----
 
 ```js
     Location = require('ip2location-native')
@@ -42,7 +44,8 @@ Sample binary databases are available [here][ip2Location-devel-db].
     location.close()
 ```
 
-## Caching
+Caching
+-------
 
 The second, optional constructor argument configures database access mode.
 The default mode is "file" - without caching. It conserves memory but reading
@@ -81,7 +84,7 @@ However you are free to pick another (the name must begin with a slash - "/")
     location.info().sharedname == "/MyDatabase1"
 ```
 
-####On POSIX sytems:
+### On POSIX sytems:
 
 A call to `location.close()` will not delete the shared memory, it will only
 detach process from it. To delete the shared memory call:
@@ -98,11 +101,12 @@ only after the last process is detached from it (closes database).
 
 Please refer to `shm_open` and `shm_unlink` man pages for more info.
 
-####On Windows:
+#### On Windows:
 
 Last process calling `location.close()` will delete the shared memory.
 
-## Performance
+Performance
+-----------
 
 On tested system the library in default IO mode with IP2LOCATION-LITE-5
 database spends on average 25µs per ip lookup returning all available record
@@ -116,13 +120,15 @@ the database with the second argument to `query()`.
 node test/bench IP2LOCATION-DATABASE.BIN access_mode iterations mask
 ```
 
-## Resilient database access
+Resilient database access
+-------------------------
 
 The library takes additional precaution when dealing with database files.
 The format verification routine prevents accessing wrong format or corrupted
 files.
 
-## Drop-in replacement
+Drop-in replacement
+-------------------
 
 The drop-in module allows you to replace the official [IP2Location library][ip2location-nodejs]
 without touching your code, except for:
@@ -134,7 +140,8 @@ without touching your code, except for:
     ip2location.IP2Location_get_all('8.8.8.8')
 ```
 
-##Database dictionary
+Database dictionary
+-------------------
 
 Do you want to know all available unique location property values?
 Sorted, grouped by property type and structured? No problem.
@@ -149,12 +156,14 @@ With this module it's possible to dump database dictionaries using
   dict.PL.region.Mazowieckie.indexOf('Warsaw') == 251
 ```
 
-## Notes
+Notes
+-----
 
 This module was tested on Linux (x64) and MS Windows (x64 and x86) with
 node 0.8, 0.10, 0.11, 0.12 and io.js.
 
-## Licence
+Licence
+-------
 
 LGPL
 
