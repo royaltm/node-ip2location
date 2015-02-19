@@ -86,6 +86,59 @@ test("should open and close ip2location databases", function(t) {
   t.end();
 });
 
+test("should open ip2location databases with different modes", function(t) {
+  [
+    "file",
+    "cache",
+    "mmap",
+    "shared",
+    "/___IP2LocationTestName.shared"
+  ].forEach(function(mode) {
+    var location = new Location(IP4DBNAME, mode);
+    t.type(location, Location);
+    t.strictEqual(location.opened, true);
+    t.strictEqual(location.ipv6, false);
+    var copybythisprocess = false;
+    var sharedname = mode;
+    var info = location.info();
+    switch(mode) {
+      case "file":
+        break;
+      case "shared":
+        sharedname = '/IP2location_Shm';
+      case "cache":
+        copybythisprocess = true;
+        sharedname == mode && (sharedname = void(0));
+      case "mmap":
+        sharedname == mode && (sharedname = void(0));
+        t.ok(info.cachesize >= info.filesize, info.cachesize + " < " + info.filesize);
+      default:
+        if (sharedname == mode) {
+          t.strictEqual(location.mode, "shared");
+          copybythisprocess = true;
+        } else {
+          t.strictEqual(location.mode, mode);
+        }
+        t.strictEqual(info.sharedname, sharedname);
+        t.strictEqual(info.copybythisprocess, copybythisprocess);
+        t.strictEqual(info.cacheoccupants, 1);
+        var location2 = new Location(IP4DBNAME, mode);
+        t.strictEqual(location.info().cacheoccupants, 2);
+        t.strictEqual(location2.info().cacheoccupants, 2);
+        t.strictEqual(location2.info().copybythisprocess, copybythisprocess);
+        location2.close();
+        t.strictEqual(location.info().cacheoccupants, 1);
+        if (sharedname)
+          location.deleteShared();
+    }
+    location.close();
+    t.strictEqual(location.opened, false);
+    t.strictEqual(location.mode, "closed");
+    t.strictEqual(location.ipv6, false);
+  });
+  t.end();
+});
+
 test("should query IPv4 and IPv4 -> IPv6 embedded addresses", function(t) {
   var location = new Location(IP4DBNAME);
   var results = [
