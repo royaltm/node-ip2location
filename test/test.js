@@ -279,3 +279,29 @@ test("should query extreme IP addresses", function(t) {
 
   location.close();
 });
+
+test("should not open different databases into named shared memory", function(t) {
+  var share = "/___IP2LocationTestLoad.shared";
+  var location = new Location(IP4DBNAME, share);
+  t.strictEqual(location.mode, "shared");
+  var info = location.info();
+  t.strictEqual(info.filename, IP4DBNAME);
+  t.strictEqual(info.sharedname, share);
+  t.strictEqual(info.copybythisprocess, true);
+  t.equal(info.cacheoccupants, 1);
+
+  var location2 = new Location(IP4DBNAME, share);
+  info = location.info();
+  t.strictEqual(info.filename, IP4DBNAME);
+  t.strictEqual(info.sharedname, share);
+  t.strictEqual(info.copybythisprocess, true);
+  t.equal(info.cacheoccupants, 2);
+  location2.close();
+
+  t.throws(function() { new Location(IP6DBNAME, share) }, new Error("could not open IP2LOCATION database"));
+
+  location.deleteShared();
+  location.close()
+
+  t.end();
+});

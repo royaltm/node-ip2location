@@ -98,7 +98,6 @@ IP2LMemoryMapList *IP2LocationSetupMMap(FILE *filehandle, size_t dbfilesize, cha
     mmlnode->mem_size = dbfilesize;
     mmlnode->count = 1;
     mmlnode->copybythisprocess = 0;
-
   }
 
   return mmlnode;
@@ -118,6 +117,12 @@ IP2LMemoryMapList *IP2LocationSetupShared(FILE *filehandle, size_t dbfilesize, c
   IP2LMemoryMapList *mmlnode = IP2LFindMemoryMapNode(shared_name, MEMMAP_TYPE_SHARED);
 
   if (mmlnode != NULL) {
+
+    /* different database file size, we should fail */
+    if (mmlnode->mem_size != dbfilesize + 1) {
+      return NULL;
+    }
+
     /* check if shared mem exists */
     if ( ( shm_fd = shm_open(mmlnode->name, O_RDWR , 0777) ) == -1 ) {
 
@@ -171,6 +176,15 @@ IP2LMemoryMapList *IP2LocationSetupShared(FILE *filehandle, size_t dbfilesize, c
     }
 
     shm_size = statbuf.st_size;
+
+    /* different database file size, we should fail */
+    if ( shm_size != dbfilesize + 1 ) {
+      close(shm_fd);
+      if ( DB_loaded == 0 )
+        shm_unlink(shared_name);
+      return NULL;
+    }
+
     shm_shared_ptr = mmap( (void *)IP2LOCATION_MMAP_ADDR,
                            shm_size,
                            PROT_READ | PROT_WRITE,
@@ -185,7 +199,7 @@ IP2LMemoryMapList *IP2LocationSetupShared(FILE *filehandle, size_t dbfilesize, c
       return NULL;
     }
 
-    if ( DB_loaded == 0 && dbfilesize > 0) {
+    if ( DB_loaded == 0 ) {
 
       if ( IP2LocationCopyDBToMemory(filehandle, shm_shared_ptr, dbfilesize) == -1 ) {
         munmap(shm_shared_ptr, shm_size);
@@ -194,6 +208,14 @@ IP2LMemoryMapList *IP2LocationSetupShared(FILE *filehandle, size_t dbfilesize, c
         return NULL;
       }
 
+      /* mark database loaded */
+      ((char *)shm_shared_ptr)[dbfilesize] = -1;
+
+    } else if ( ((char *)shm_shared_ptr)[dbfilesize] != -1 ) {
+      munmap(shm_shared_ptr, shm_size);
+      close(shm_fd);
+      shm_unlink(shared_name);
+      return NULL;
     }
 
     mmlnode = IP2LCreateMemoryMapNode(shared_name, MEMMAP_TYPE_SHARED);
@@ -269,6 +291,11 @@ IP2LMemoryMapList *IP2LocationSetupShared(FILE *filehandle, size_t dbfilesize, c
   size_t shm_size;
   int DB_loaded = 1;
   IP2LMemoryMapList *mmlnode;
+  SYSTEM_INFO sysInfo;
+
+  GetSystemInfo(&sysInfo);
+
+  shm_size = ((dbfilesize / sysInfo.dwPageSize) + 1) * sysInfo.dwPageSize;
 
   if (shared_name == NULL) {
     shared_name = IP2LOCATION_SHARED_NAME;
@@ -278,11 +305,14 @@ IP2LMemoryMapList *IP2LocationSetupShared(FILE *filehandle, size_t dbfilesize, c
 
   if (mmlnode != NULL) {
 
+    /* different database file size, we should fail */
+    if (mmlnode->mem_size != shm_size) {
+      return NULL;
+    }
+
     mmlnode->count++;
 
   } else {
-
-    shm_size = dbfilesize + 1;
 
     shm_fd = CreateFileMapping(
                    INVALID_HANDLE_VALUE,
@@ -310,7 +340,7 @@ IP2LMemoryMapList *IP2LocationSetupShared(FILE *filehandle, size_t dbfilesize, c
       return NULL;
     }
 
-    if ( DB_loaded == 0 && dbfilesize > 0) {
+    if ( DB_loaded == 0 ) {
 
       if ( IP2LocationCopyDBToMemory(filehandle, shm_shared_ptr, dbfilesize) == -1 ) {
         UnmapViewOfFile(shm_shared_ptr);
@@ -318,6 +348,20 @@ IP2LMemoryMapList *IP2LocationSetupShared(FILE *filehandle, size_t dbfilesize, c
         return NULL;
       }
 
+      /* mark database loaded */
+      ((char *)shm_shared_ptr)[dbfilesize] = -1;
+
+    } else {
+      MEMORY_BASIC_INFORMATION mapInfo;
+
+      /* different database file size, we should fail */
+      if ( VirtualQuery(shm_shared_ptr, &mapInfo, sizeof(mapInfo)) < sizeof(mapInfo) ||
+            mapInfo.RegionSize != shm_size ||
+            ((char *)shm_shared_ptr)[dbfilesize] != -1) {
+        UnmapViewOfFile(shm_shared_ptr);
+        CloseHandle(shm_fd);
+        return NULL;
+      }
     }
 
     mmlnode = IP2LCreateMemoryMapNode(shared_name, MEMMAP_TYPE_SHARED);
