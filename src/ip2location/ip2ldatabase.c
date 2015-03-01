@@ -22,7 +22,7 @@
 static const uint32_t IP2LreadError128[4] = { 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF };
 #define IP2LreadError32 0xFFFFFFFF
 #define IP2LreadError8 0xFF
-#define IP2LreadErrorFloat -1.0F
+#define IP2LreadErrorFloat 0.0F
 static const uint8_t IP2LreadErrorStr[1] = { 0 };
 
 static int IP2LocationCopyDBToMemory(FILE *filehandle, void *memory, size_t size)
