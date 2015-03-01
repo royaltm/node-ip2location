@@ -27,9 +27,11 @@ static const uint8_t IP2LreadErrorStr[1] = { 0 };
 
 static int IP2LocationCopyDBToMemory(FILE *filehandle, void *memory, size_t size)
 {
-  fseek(filehandle, SEEK_SET, 0);
+  if ( size == 0 )
+    return -1;
 
-  if ( fread(memory, size, 1, filehandle) != 1 )
+  if ( fseek(filehandle, SEEK_SET, 0) != 0 ||
+       fread(memory, size, 1, filehandle) != 1 )
     return -1;
 
   return 0;
