@@ -5,6 +5,8 @@
 #include <stdio.h>
 
 #ifndef WIN32
+#  include <sys/types.h>
+#  include <sys/stat.h>
   typedef int SHARED_MEM_FHANDLE;
 #else
 #ifdef WIN32
