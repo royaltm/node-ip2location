@@ -159,7 +159,7 @@ With this module it's possible to dump database dictionaries using
 Notes
 -----
 
-This module was tested on Linux (x64) and MS Windows (x64 and x86) with
+This module was tested on Linux (x64), OS X, FreeBSD and MS Windows (x64 and x86) with
 node 0.8, 0.10, 0.11, 0.12 and io.js.
 
 Licence
