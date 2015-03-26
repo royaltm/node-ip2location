@@ -1,3 +1,8 @@
+v1.0.3
+
+* bugfix: database size check before re-opening shared memory
+* compat: FreeBSD compatibility ensured
+
 v1.0.2
 
 * bugfix: custom shared name mode argument parsing
