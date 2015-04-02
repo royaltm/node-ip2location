@@ -1,3 +1,7 @@
+v1.0.4
+
+* feature: accept ip address as binary object (Buffer)
+
 v1.0.3
 
 * bugfix: database size check before re-opening shared memory
