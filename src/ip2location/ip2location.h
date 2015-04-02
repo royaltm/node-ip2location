@@ -90,6 +90,7 @@ IP2Location *IP2LocationOpen(char *db, IP2LOCATION_ACCESS_TYPE mtype, char *shar
 void IP2LocationClose(IP2Location *loc);
 int IP2LocationDeleteShared(IP2Location *loc);
 uint32_t IP2LocationFindRow(IP2Location *loc, char *ip);
+uint32_t IP2LocationFindRow2(IP2Location *loc, void *ipbuff, uint32_t ipsize);
 uint32_t IP2LocationFindRowIPV6(IP2Location *loc, ipv6le128_t *ip6no);
 uint32_t IP2LocationFindRowIPV4(IP2Location *loc, uint32_t ipno);
 int IP2LocationRowData(IP2Location *loc,

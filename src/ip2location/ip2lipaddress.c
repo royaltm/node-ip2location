@@ -1,6 +1,7 @@
 #include "ip2lipaddress.h"
 
 #include <stdio.h>
+#include <string.h>
 
 #ifndef WIN32
 #  include <sys/socket.h>
@@ -46,6 +47,38 @@ int IP2LocationIP2No(const char *ipstr, ipv6le128_t *ip)
 
     return 6;
 
+  }
+
+  return 0;
+}
+
+int IP2LocationIPBin2No(void *ipaddr, uint32_t ipsize, ipv6le128_t *ip)
+{
+  switch(ipsize) {
+    case 4:
+      {
+        uint8_t *ipptr = ipaddr;
+        ip->ipv4.addr = ((uint32_t)ipptr[0] << 24) |
+                        ((uint32_t)ipptr[1] << 16) |
+                        ((uint32_t)ipptr[2] << 8) |
+                        ((uint32_t)ipptr[3]);
+      }
+      return 4;
+    case 16:
+      {
+        uint32_t buff[4];
+        memcpy(buff, ipaddr, ipsize);
+        ip->ui32[0] = ntohl(buff[3]);
+        ip->ui32[1] = ntohl(buff[2]);
+        ip->ui32[2] = ntohl(buff[1]);
+        ip->ui32[3] = ntohl(buff[0]);
+      }
+      /* IPv4Map */
+      if ( ip->ui32[1] == 0x0000FFFFU &&
+           ! (ip->ui32[2] | ip->ui32[3]) )
+        return 4;
+
+      return 6;
   }
 
   return 0;

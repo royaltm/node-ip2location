@@ -109,7 +109,9 @@ test("should query IPv4 and IPv4 -> IPv6 embedded addresses", function(t) {
     '::FFFF:8.8.8.8',
     '0000:0000:0000:0000:0000:FFFF:8.8.8.8',
     '0:0:0:0:0:ffff:808:808',
-    '::ffff:808:808'
+    '::ffff:808:808',
+    new Buffer([8,8,8,8]),
+    new Buffer('00000000000000000000FFFF08080808', 'hex')
   ].map(function(ip) {
     return dropin.IP2Location_get_all(ip);
   });
@@ -121,6 +123,39 @@ test("should query IPv4 and IPv4 -> IPv6 embedded addresses", function(t) {
   });
 
   dropin.IP2Location_init();
+});
+
+test("should return same records with binary and string IP", function(t) {
+  dropin.IP2Location_init(IP4DBNAME);
+  [
+    ['1.2.3.4', new Buffer([1,2,3,4])],
+    ['8.8.4.4', new Buffer([8,8,4,4])],
+    ['::FFFF:8.8.4.4', new Buffer('00000000000000000000FFFF08080404', 'hex')],
+    ['10.0.0.1', new Buffer([10,0,0,1])]
+  ].forEach(function(addresses) {
+    results = addresses.map(function(addr) { return dropin.IP2Location_get_all(addr) });
+    t.type(results[0], Object);
+    t.ok(results[0]);
+    t.deepEqual(results[0], results[1], addresses[0]);
+  });
+
+  dropin.IP2Location_init(IP6DBNAME);
+  [
+    ['2A04::0000', new Buffer('2A040000000000000000000000000000', 'hex')],
+    ['2A04:ae3d:0000:0000::0000', new Buffer('2A04ae3d000000000000000000000000', 'hex')]
+  ].forEach(function(addresses) {
+    results = addresses.map(function(addr) { return dropin.IP2Location_get_all(addr) });
+    t.type(results[0], Object);
+    t.ok(results[0]);
+    t.notDeepEqual(results[0].ip, results[1].ip, addresses[0]);
+    t.strictEqual(results[0].ip, addresses[0]);
+    t.deepEqual(results[1].ip, addresses[1]);
+    results[1].ip = results[0].ip;
+    t.deepEqual(results[0], results[1], addresses[0]);
+  });
+
+  dropin.IP2Location_init();
+  t.end();
 });
 
 var properties = [

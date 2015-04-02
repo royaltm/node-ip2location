@@ -342,6 +342,19 @@ uint32_t IP2LocationFindRow(IP2Location *loc, char *ip)
   return IP2L_NOT_FOUND;
 }
 
+uint32_t IP2LocationFindRow2(IP2Location *loc, void *ipbuff, uint32_t ipsize)
+{
+  ipv6le128_t ipaddr;
+
+  switch( IP2LocationIPBin2No(ipbuff, ipsize, &ipaddr) ) {
+    case 6:
+      return IP2LocationFindRowIPV6(loc, &ipaddr);
+    case 4:
+      return IP2LocationFindRowIPV4(loc, ipaddr.ipv4.addr);
+  }
+  return IP2L_NOT_FOUND;
+}
+
 
 int IP2LocationRowString(IP2Location *loc,
                          IP2LOCATION_DATA_INDEX index,

@@ -288,15 +288,21 @@ NAN_METHOD(Location::Query)
     return NanThrowError("IP2LOCATION database is closed");
   }
 
-  NanUtf8String ip( args[0] );
-
   uint32_t mode = location->iplocdb->mode_mask;
 
   if ( args.Length() > 1 ) {
     mode &= args[1]->Uint32Value();
   }
 
-  uint32_t dboffset = IP2LocationFindRow(location->iplocdb, *ip);
+  uint32_t dboffset;
+
+  if ( Buffer::HasInstance(args[0]) ) {
+    Local<Object> ipbuff = args[0].As<Object>();
+    dboffset = IP2LocationFindRow2( location->iplocdb,
+                        (void *)Buffer::Data(ipbuff), (uint32_t)Buffer::Length(ipbuff) );
+  } else {
+    dboffset = IP2LocationFindRow( location->iplocdb, *NanUtf8String(args[0]) );
+  }
 
   if ( dboffset != IP2L_NOT_FOUND ) {
     Local<Object> result = NanNew<Object>();
@@ -372,8 +378,15 @@ NAN_METHOD(Location::GetAll)
   }
 
   ipv6le128_t ipaddr;
+  int iptype;
 
-  int iptype = IP2LocationIP2No( *NanUtf8String(ip), &ipaddr );
+  if ( Buffer::HasInstance(ip) ) {
+    Local<Object> ipbuff = ip.As<Object>();
+    iptype = IP2LocationIPBin2No(
+               (void *)Buffer::Data(ipbuff), (uint32_t)Buffer::Length(ipbuff), &ipaddr );
+  } else {
+    iptype = IP2LocationIP2No( *NanUtf8String(ip), &ipaddr );
+  }
 
   uint32_t dboffset;
 
