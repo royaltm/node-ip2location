@@ -43,6 +43,15 @@ function randip() {
   return [random()*100&255,random()*256&255,random()*256&255,random()*256&255].join('.');
 }
 
+var ip4buff = new Buffer(4);
+function randipbin() {
+  ip4buff[0] = random()*100&255;
+  ip4buff[1] = random()*256&255;
+  ip4buff[2] = random()*256&255;
+  ip4buff[3] = random()*256&255;
+  return ip4buff;
+}
+
 function randipv6() {
   return ["2A04",
           (random()*0x10000|0+0x10000).toString(16).substr(1),
@@ -52,9 +61,21 @@ function randipv6() {
           (random()*0x10000|0+0x10000).toString(16).substr(1)].join(":");
 }
 
+var ip6buff = new Buffer(16);
+ip6buff.fill(0);
+ip6buff[0] = 0x2a;
+ip6buff[1] = 0x04;
+function randipv6bin() {
+  ip6buff.writeUInt16BE(random()*0x10000|0, 2);
+  ip6buff.writeUInt16BE(random()*0x10000|0, 4);
+  ip6buff.writeUInt16BE(random()*0x10000|0, 6);
+  ip6buff.writeUInt16BE(random()*0x10000|0, 14);
+  return ip6buff;
+}
+
 var hasipv6 = location.ipv6;
 
-function test(testfun) {
+function test(testfun, nobin) {
   console.log("ipv4 test x " + iter + " times");
   var ms = ben(iter, function() {
     testfun(randip());
@@ -62,6 +83,16 @@ function test(testfun) {
 
   console.log('query/ms: ' + (1 / ms).toFixed(4));
   console.log('query in: ' + ms + 'ms');
+
+  if (!nobin) {
+    console.log("\nipv4bin test x " + iter + " times");
+    var ms = ben(iter, function() {
+      testfun(randipbin());
+    });
+
+    console.log('query/ms: ' + (1 / ms).toFixed(4));
+    console.log('query in: ' + ms + 'ms');
+  }
 
   if (hasipv6) {
     console.log("\nipv6 test x " + iter + " times");
@@ -71,6 +102,16 @@ function test(testfun) {
 
     console.log('query/ms: ' + (1 / ms).toFixed(4));
     console.log('query in: ' + ms + 'ms');
+
+    if (!nobin) {
+      console.log("\nipv6bin test x " + iter + " times");
+      ms = ben(iter, function() {
+        testfun(randipv6bin());
+      });
+
+      console.log('query/ms: ' + (1 / ms).toFixed(4));
+      console.log('query in: ' + ms + 'ms');
+    }
   }
 }
 
@@ -80,9 +121,15 @@ console.log(location.info());
 var ip = randip();
 console.log(ip);
 console.log(location.query(ip, mask));
+ip = randipbin();
+console.log(ip);
+console.log(location.query(ip, mask));
 
 if (location.ipv6) {
   ip = randipv6();
+  console.log(ip);
+  console.log(location.query(ip, mask));
+  ip = randipv6bin();
   console.log(ip);
   console.log(location.query(ip, mask));
 }
@@ -116,6 +163,6 @@ ip2loc.IP2Location_init(file)
 console.log('-------------------');
 console.log("ip2location-nodejs:");
 console.log("\nIP2Location_get_all()");
-test(ip2loc.IP2Location_get_all);
+test(ip2loc.IP2Location_get_all, true);
 console.log("\nIP2Location_get_country_short()");
-test(ip2loc.IP2Location_get_country_short.bind(ip2loc));
+test(ip2loc.IP2Location_get_country_short.bind(ip2loc), true);
