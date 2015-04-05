@@ -111,6 +111,8 @@ IP2LMemoryMapList *IP2LocationSetupShared(FILE *filehandle, size_t dbfilesize, c
   size_t shm_size;
   int DB_loaded = 1;
 
+  shm_size = ((dbfilesize / getpagesize()) + 1) * getpagesize();
+
   if (shared_name == NULL)
     shared_name = IP2LOCATION_SHARED_NAME;
 
@@ -119,7 +121,7 @@ IP2LMemoryMapList *IP2LocationSetupShared(FILE *filehandle, size_t dbfilesize, c
   if (mmlnode != NULL) {
 
     /* different database file size, we should fail */
-    if (mmlnode->mem_size != dbfilesize + 1) {
+    if (mmlnode->mem_size != shm_size) {
       return NULL;
     }
 
@@ -159,7 +161,7 @@ IP2LMemoryMapList *IP2LocationSetupShared(FILE *filehandle, size_t dbfilesize, c
 
     if (DB_loaded == 0) {
       /* extend shared mem above database size */
-      if ( ftruncate(shm_fd, dbfilesize + 1) == -1 ) {
+      if ( ftruncate(shm_fd, shm_size) == -1 ) {
         close(shm_fd);
         shm_unlink(shared_name);
         return NULL;
@@ -175,10 +177,8 @@ IP2LMemoryMapList *IP2LocationSetupShared(FILE *filehandle, size_t dbfilesize, c
       return NULL;
     }
 
-    shm_size = statbuf.st_size;
-
     /* different database file size, we should fail */
-    if ( shm_size != dbfilesize + 1 ) {
+    if ( (size_t) statbuf.st_size != shm_size ) {
       close(shm_fd);
       if ( DB_loaded == 0 )
         shm_unlink(shared_name);
