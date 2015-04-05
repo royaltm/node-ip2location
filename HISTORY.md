@@ -1,3 +1,7 @@
+v1.0.5
+
+* bugfix: shared memory file size rounded to multiple of pagesize on ux-es
+
 v1.0.4
 
 * feature: accept ip address as binary object (Buffer)
