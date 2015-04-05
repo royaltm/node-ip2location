@@ -41,6 +41,10 @@ Usage
       latitude: ....,
       longitude: .... }
 
+    # query binary ip
+    location.query( new Buffer([8,8,4,4]) )
+
+    # free resources
     location.close()
 ```
 
