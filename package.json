@@ -16,18 +16,17 @@
     "url": "git://github.com/advertine/node-ip2location.git"
   },
   "scripts": {
-    "test": "tap-prettify test/test.js test/test.dropin.js"
+    "test": "tap test/test.js test/test.dropin.js"
   },
   "main": "index.js",
   "engines": {
-    "node": ">=0.8.0"
+    "node": ">=0.10.0"
   },
   "dependencies": {
     "nan": "^1.8"
   },
   "devDependencies": {
-    "tap": "~0.5",
-    "tap-prettify": "*",
+    "tap": "*",
     "ben": "*",
     "ip2location-nodejs": "*"
   }

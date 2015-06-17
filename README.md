@@ -164,7 +164,7 @@ Notes
 -----
 
 This module was tested on Linux (x64), OS X, FreeBSD and MS Windows (x64 and x86) with
-node 0.8, 0.10, 0.11, 0.12 and io.js.
+node 0.10, 0.11, 0.12 and io.js.
 
 Licence
 -------
