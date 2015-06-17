@@ -1,3 +1,8 @@
+v1.0.6
+
+* deps: bump nan to 1.8, fixes build problem with newest io.js
+* node 0.8 support dropped
+
 v1.0.5
 
 * bugfix: shared memory file size rounded to multiple of pagesize on ux-es
