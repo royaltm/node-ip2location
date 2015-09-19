@@ -180,42 +180,42 @@ NAN_INLINE void Location::BuildDictionaryBranchItem(
 Local<Object> Location::CreateDictionaryResult( const IP2LDictionary &dict,
                                                 const uint32_t mask )
 {
-  NanEscapableScope();
-  Local<Object> result( NanNew<Object>() );
-  Local<String> _index( NanNew<String>("_index")),
-                country_long( NanNew<String>("country_long") ),
-                country_short( NanNew<String>("country_short") ),
-                region( NanNew<String>("region") ),
-                isp( NanNew<String>("isp") ),
-                domain( NanNew<String>("domain") ),
-                zipcode( NanNew<String>("zipcode") ),
-                iddcode( NanNew<String>("iddcode") ),
-                areacode( NanNew<String>("areacode") ),
-                weatherstationcode( NanNew<String>("weatherstationcode") ),
-                weatherstationname( NanNew<String>("weatherstationname") ),
-                mcc( NanNew<String>("mcc") ),
-                mobilebrand( NanNew<String>("mobilebrand") );
+  Nan::EscapableHandleScope scope;
+  Local<Object> result( Nan::New<Object>() );
+  Local<String> _index( Nan::New<String>("_index").ToLocalChecked() ),
+                country_long( Nan::New<String>("country_long").ToLocalChecked()  ),
+                country_short( Nan::New<String>("country_short").ToLocalChecked()  ),
+                region( Nan::New<String>("region").ToLocalChecked()  ),
+                isp( Nan::New<String>("isp").ToLocalChecked()  ),
+                domain( Nan::New<String>("domain").ToLocalChecked()  ),
+                zipcode( Nan::New<String>("zipcode").ToLocalChecked()  ),
+                iddcode( Nan::New<String>("iddcode").ToLocalChecked()  ),
+                areacode( Nan::New<String>("areacode").ToLocalChecked()  ),
+                weatherstationcode( Nan::New<String>("weatherstationcode").ToLocalChecked()  ),
+                weatherstationname( Nan::New<String>("weatherstationname").ToLocalChecked()  ),
+                mcc( Nan::New<String>("mcc").ToLocalChecked()  ),
+                mobilebrand( Nan::New<String>("mobilebrand").ToLocalChecked()  );
 
-  const Map<IP2LDictionaryElement>::type &dict_map = dict.Children();
+  const ::Map<IP2LDictionaryElement>::type &dict_map = dict.Children();
   Local<Array> index_array = CreateArrayResult(dict_map);
-  result->Set( _index, index_array );
+  Nan::Set(result, _index, index_array );
 
   uint32_t country_index = 0;
 
-  for( Map<IP2LDictionaryElement>::type::const_iterator it = dict_map.begin();
+  for( ::Map<IP2LDictionaryElement>::type::const_iterator it = dict_map.begin();
                                                 it != dict_map.end(); ++it ) {
     const IP2LDictionaryCountry *country = static_cast<
                                     const IP2LDictionaryCountry *>(it->second);
-    Local<Object> country_result( NanNew<Object>() );
-    Local<String> short_name = index_array->Get(country_index++).As<String>();
-    country_result->Set( country_short, short_name );
+    Local<Object> country_result( Nan::New<Object>() );
+    Local<String> short_name = Nan::Get(index_array, country_index++).ToLocalChecked().As<String>();
+    Nan::Set(country_result, country_short, short_name );
 
     if ( (mask & IP2L_COUNTRY_LONG_MASK) != 0 ) {
       if ( country->SecondName() != NULL ) {
-        country_result->Set( country_long,
-                             NanNew<String>( country->SecondName() ) );
+        Nan::Set(country_result, country_long,
+                             Nan::New<String>( country->SecondName() ).ToLocalChecked() );
       } else {
-        country_result->Set( country_long, NanNull() );
+        Nan::Set(country_result, country_long, Nan::Null() );
       }
     }
 
@@ -231,7 +231,7 @@ Local<Object> Location::CreateDictionaryResult( const IP2LDictionary &dict,
     if ( (mask & ( IP2L_WEATHERSTATIONCODE_MASK|
                    IP2L_WEATHERSTATIONNAME_MASK
                    )) == IP2L_WEATHERSTATIONCODE_MASK ) {
-      country_result->Set(weatherstationcode, CreateArrayResult(
+      Nan::Set(country_result, weatherstationcode, CreateArrayResult(
                                 country->Children(IP2L_DICT_WEATHERSTATION)) );
     }
 
@@ -263,17 +263,17 @@ Local<Object> Location::CreateDictionaryResult( const IP2LDictionary &dict,
                                    country->Children(IP2L_DICT_MOBILEBRAND),
                                    mobilebrand, country_result );
 
-    result->Set( short_name, country_result );
+    Nan::Set(result, short_name, country_result );
   }
 
-  return NanEscapeScope(result);
+  return scope.Escape(result);
 }
 
 NAN_INLINE void Location::CreateDictionaryResultBranch(
                             const uint32_t mask,
                             const uint32_t branch_mask,
                             const uint32_t leaf_mask,
-                            const Map<IP2LDictionaryElement>::type &branch_map,
+                            const ::Map<IP2LDictionaryElement>::type &branch_map,
                             const Handle<String> &indexLabel,
                             const Handle<String> &label,
                             Handle<Object> &result)
@@ -282,19 +282,19 @@ NAN_INLINE void Location::CreateDictionaryResultBranch(
     Local<Array> branch_array = CreateArrayResult(branch_map);
 
     if ( (mask & leaf_mask) != 0 ) {
-      Local<Object> branch_result( NanNew<Object>() );
-      branch_result->Set( indexLabel, branch_array );
+      Local<Object> branch_result( Nan::New<Object>() );
+      Nan::Set(branch_result, indexLabel, branch_array );
       uint32_t branch_index = 0;
-      for( Map<IP2LDictionaryElement>::type::const_iterator it = branch_map.begin();
+      for( ::Map<IP2LDictionaryElement>::type::const_iterator it = branch_map.begin();
                                           it != branch_map.end(); ++it ) {
-        branch_result->Set(
-                      branch_array->Get(branch_index++),
+        Nan::Set(branch_result,
+                      Nan::Get(branch_array, branch_index++).ToLocalChecked(),
                       CreateArrayResult(
                         static_cast<const IP2LDictionaryBranch *>(it->second)->Children()) );
       }
-      result->Set( label, branch_result );
+      Nan::Set(result, label, branch_result );
     } else {
-      result->Set( label, branch_array );
+      Nan::Set(result, label, branch_array );
     }
   }
 }
@@ -302,27 +302,27 @@ NAN_INLINE void Location::CreateDictionaryResultBranch(
 NAN_INLINE void Location::CreateDictionaryResultElement(
                             const uint32_t mask,
                             const uint32_t leaf_mask,
-                            const Map<IP2LDictionaryElement>::type &leaf_map,
+                            const ::Map<IP2LDictionaryElement>::type &leaf_map,
                             const Handle<String> &label,
                             Handle<Object> &result)
 {
   if ( (mask & leaf_mask) != 0 ) {
-    result->Set(label, CreateArrayResult(leaf_map) );
+    Nan::Set(result, label, CreateArrayResult(leaf_map) );
   }
 }
 
 Local<Array> Location::CreateArrayResult(
-                              const Map<IP2LDictionaryElement>::type &dict_map)
+                              const ::Map<IP2LDictionaryElement>::type &dict_map)
 {
-  NanEscapableScope();
+  Nan::EscapableHandleScope scope;
 
-  Local<Array> result( NanNew<Array>( (uint32_t) dict_map.size() ) );
+  Local<Array> result( Nan::New<Array>( (uint32_t) dict_map.size() ) );
 
   uint32_t index = 0;
 
-  for( Map<IP2LDictionaryElement>::type::const_iterator it = dict_map.begin();
+  for( ::Map<IP2LDictionaryElement>::type::const_iterator it = dict_map.begin();
                                       it != dict_map.end(); ++it ) {
-    result->Set( index++, NanNew<String>( it->second->Name() ) );
+    Nan::Set(result, index++, Nan::New<String>( it->second->Name() ).ToLocalChecked() );
   }
-  return NanEscapeScope(result);
+  return scope.Escape(result);
 }

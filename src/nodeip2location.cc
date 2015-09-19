@@ -51,38 +51,40 @@ static const char * const LOCATION_CONST_KEYS[IP2L_INDEX_MAX + 1] = {
   "USAGETYPE"
 };
 
-void Location::Init(Handle<Object> exports)
+NAN_MODULE_INIT(Location::Init)
 {
-  Local<FunctionTemplate> tpl = NanNew<FunctionTemplate>(New);
-  NanAssignPersistent( constructor, tpl );
-  tpl->SetClassName( NanNew<String>("Location") );
+  Local<FunctionTemplate> tpl = Nan::New<FunctionTemplate>(New);
+  tpl->SetClassName( Nan::New<String>("Location").ToLocalChecked() );
 
   Local<ObjectTemplate> i_t = tpl->InstanceTemplate();
   i_t->SetInternalFieldCount(1);
 
-  i_t->SetAccessor( NanNew<String>("mode"), GetDbMode );
-  i_t->SetAccessor( NanNew<String>("opened"), GetIsOpen );
+  Nan::SetAccessor( i_t, Nan::New<String>("mode").ToLocalChecked(), GetDbMode );
+  Nan::SetAccessor( i_t, Nan::New<String>("opened").ToLocalChecked(), GetIsOpen );
 
-  Local<ObjectTemplate> proto = tpl->PrototypeTemplate();
-  proto->SetAccessor( NanNew<String>("ipv6"), HasIpv6 );
+  Nan::SetAccessor( tpl->PrototypeTemplate(), Nan::New<String>("ipv6").ToLocalChecked(), HasIpv6 );
 
   for(int index = 0; index <= IP2L_INDEX_MAX; ++index) {
-    tpl->Set( NanNew<String>(LOCATION_CONST_KEYS[index]),
-              NanNew<Int32>(1 << index),
+    Nan::SetTemplate(tpl,
+              Nan::New<String>(LOCATION_CONST_KEYS[index]).ToLocalChecked(),
+              Nan::New<Int32>(1 << index),
               static_cast<PropertyAttribute>(ReadOnly | DontDelete) );
   }
 
-  tpl->Set( NanNew<String>("ALL"), NanNew<Int32>(LOCATION_ALL),
+  Nan::SetTemplate(tpl, Nan::New<String>("ALL").ToLocalChecked(),
+    Nan::New<Int32>(LOCATION_ALL),
     static_cast<PropertyAttribute>(ReadOnly | DontDelete) );
 
-  NODE_SET_PROTOTYPE_METHOD(tpl, "query", Query);
-  NODE_SET_PROTOTYPE_METHOD(tpl, "close", CloseDatabase);
-  NODE_SET_PROTOTYPE_METHOD(tpl, "info", GetDbInfo);
-  NODE_SET_PROTOTYPE_METHOD(tpl, "deleteShared", DeleteShared);
-  NODE_SET_PROTOTYPE_METHOD(tpl, "createDictionary", CreateDictionary);
-  NODE_SET_PROTOTYPE_METHOD(tpl, "getAll", GetAll);
+  Nan::SetPrototypeMethod(tpl, "query", Query);
+  Nan::SetPrototypeMethod(tpl, "close", CloseDatabase);
+  Nan::SetPrototypeMethod(tpl, "info", GetDbInfo);
+  Nan::SetPrototypeMethod(tpl, "deleteShared", DeleteShared);
+  Nan::SetPrototypeMethod(tpl, "createDictionary", CreateDictionary);
+  Nan::SetPrototypeMethod(tpl, "getAll", GetAll);
 
-  exports->Set( NanNew<String>("Location"), NanNew<FunctionTemplate>(constructor)->GetFunction() );
+  constructor.Reset( Nan::GetFunction(tpl).ToLocalChecked() );
+  Nan::Set(target, Nan::New<v8::String>("Location").ToLocalChecked(),
+                   Nan::GetFunction(tpl).ToLocalChecked());
 }
 
 Location::Location(char *locdbpath, IP2LOCATION_ACCESS_TYPE mtype, char *shared)
@@ -106,19 +108,18 @@ void Location::Close()
 
 NAN_METHOD(Location::New)
 {
-  NanScope();
 
-  if ( args.IsConstructCall() ) {
+  if ( info.IsConstructCall() ) {
 
-    NanUtf8String locdbpath( args[0] );
+    Nan::Utf8String locdbpath( info[0] );
     Location* location;
     IP2LOCATION_ACCESS_TYPE mtype(IP2LOCATION_FILE_IO);
 
     const char *dbmode = LOCATION_DBMODE_FILE;
 
-    if ( args.Length() > 1 ) {
+    if ( info.Length() > 1 ) {
       char *shared = NULL;
-      NanUtf8String stype( args[1] );
+      Nan::Utf8String stype( info[1] );
       if ( ! strcmp(*stype, LOCATION_DBMODE_SHARED) ) {
         mtype = IP2LOCATION_SHARED_MEMORY;
         dbmode = LOCATION_DBMODE_SHARED;
@@ -133,7 +134,7 @@ NAN_METHOD(Location::New)
         dbmode = LOCATION_DBMODE_SHARED;
         shared = *stype;
       } else if ( strcmp(*stype, LOCATION_DBMODE_FILE) ) {
-        return NanThrowError("unknown IP2LOCATION access mode, should be "
+        return Nan::ThrowError("unknown IP2LOCATION access mode, should be "
                              "\"file\", \"cache\", \"mmap\" or \"shared\"");
       }
 
@@ -144,86 +145,81 @@ NAN_METHOD(Location::New)
 
     if ( ! location->iplocdb ) {
       delete location;
-      return NanThrowError("could not open IP2LOCATION database");
+      return Nan::ThrowError("could not open IP2LOCATION database");
     }
 
     location->dbmode = dbmode;
-    location->Wrap( args.This() );
-    NanReturnValue( args.This() );
+    location->Wrap( info.This() );
+    info.GetReturnValue().Set( info.This() );
 
   } else {
-    int argc = args.Length();
+
+    int argc = info.Length();
     if (argc > 2) argc = 2;
     Local<Value> argv[2];
     for (int i = 0; i < argc; i++) {
-      argv[i] = args[i];
+      argv[i] = info[i];
     }
-    NanReturnValue(
-      NanNew<FunctionTemplate>(constructor)->GetFunction()->NewInstance(argc, &argv[0]) );
+    Local<Function> cons = Nan::New<Function>(constructor);
+    info.GetReturnValue().Set( Nan::NewInstance(cons, argc, &argv[0]).ToLocalChecked() );
   }
 }
 
 NAN_GETTER(Location::GetDbMode)
 {
-  NanScope();
-  Location *location = ObjectWrap::Unwrap<Location>( args.This() );
-  NanReturnValue( NanNew<String>(location->dbmode) );
+  Location *location = Nan::ObjectWrap::Unwrap<Location>( info.This() );
+  info.GetReturnValue().Set( Nan::New<String>(location->dbmode).ToLocalChecked() );
 }
 
 NAN_GETTER(Location::GetIsOpen)
 {
-  NanScope();
-  Location *location = ObjectWrap::Unwrap<Location>( args.This() );
-  NanReturnValue( NanNew<Boolean>( location->iplocdb != NULL ) );
+  Location *location = Nan::ObjectWrap::Unwrap<Location>( info.This() );
+  info.GetReturnValue().Set( location->iplocdb != NULL );
 }
 
 NAN_GETTER(Location::HasIpv6)
 {
-  NanScope();
-  Location *location = ObjectWrap::Unwrap<Location>( args.This() );
-  NanReturnValue( NanNew<Boolean>( IP2LocationDBhasIPV6(location->iplocdb) != 0 ) );
+  Location *location = Nan::ObjectWrap::Unwrap<Location>( info.This() );
+  info.GetReturnValue().Set( IP2LocationDBhasIPV6(location->iplocdb) != 0 );
 }
 
 NAN_METHOD(Location::CloseDatabase)
 {
-  NanScope();
-  Location* location = ObjectWrap::Unwrap<Location>(args.This());
+  Location* location = Nan::ObjectWrap::Unwrap<Location>(info.This());
   location->Close();
-  NanReturnUndefined();
+  info.GetReturnValue().SetUndefined();
 }
 
 NAN_METHOD(Location::DeleteShared)
 {
-  NanScope();
 
-  Location* location = ObjectWrap::Unwrap<Location>(args.This());
+  Location* location = Nan::ObjectWrap::Unwrap<Location>(info.This());
 
   switch(IP2LocationDeleteShared(location->iplocdb)) {
   case 0:
-    NanReturnValue( NanTrue() );
+    info.GetReturnValue().Set(true);
   case -1:
-    NanReturnValue( NanFalse() );
+    info.GetReturnValue().Set(false);
   default:
-    NanReturnNull();
+    info.GetReturnValue().SetNull();
   }
 }
 
 NAN_METHOD(Location::CreateDictionary)
 {
-  NanScope();
 
-  Location* location = ObjectWrap::Unwrap<Location>(args.This());
+  Location* location = Nan::ObjectWrap::Unwrap<Location>(info.This());
   if ( ! location->iplocdb ) {
-    return NanThrowError("IP2LOCATION database is closed");
+    return Nan::ThrowError("IP2LOCATION database is closed");
   }
   if ( location->iplocdb->mml_node == NULL ) {
-    return NanThrowError("IP2LOCATION database should be in cache, mmap or shared mode");
+    return Nan::ThrowError("IP2LOCATION database should be in cache, mmap or shared mode");
   }
 
   uint32_t mode = LOCATION_ALL;
 
-  if ( args.Length() > 0 ) {
-    mode = args[0]->Uint32Value();
+  if ( info.Length() > 0 ) {
+    mode = info[0]->Uint32Value();
   }
 
   IP2LDictionary dict;
@@ -232,80 +228,93 @@ NAN_METHOD(Location::CreateDictionary)
 
   Local<Object> result = CreateDictionaryResult(dict, mode);
 
-  NanReturnValue(result);
+  info.GetReturnValue().Set(result);
 }
 
 NAN_METHOD(Location::GetDbInfo)
 {
-  NanScope();
 
-  Location* location = ObjectWrap::Unwrap<Location>( args.This() );
+  Location* location = Nan::ObjectWrap::Unwrap<Location>( info.This() );
 
   IP2Location *iplocdb = location->iplocdb;
-  Local<Object> info = NanNew<Object>();
+  Local<Object> result = Nan::New<Object>();
 
   if (iplocdb) {
-    info->Set( NanNew<String>("filename"), NanNew<String>(iplocdb->filename) );
-    info->Set( NanNew<String>("filesize"), NanNew<Uint32>( (uint32_t) iplocdb->filesize) );
-    info->Set( NanNew<String>("databasetype"), NanNew<Int32>(iplocdb->databasetype) );
-    info->Set( NanNew<String>("databasetype"), NanNew<Int32>(iplocdb->databasetype) );
-    info->Set( NanNew<String>("databasecolumn"), NanNew<Int32>(iplocdb->databasecolumn) );
-    info->Set( NanNew<String>("databaseyear"), NanNew<Int32>(iplocdb->databaseyear) );
-    info->Set( NanNew<String>("databasemonth"), NanNew<Int32>(iplocdb->databasemonth) );
-    info->Set( NanNew<String>("databaseday"), NanNew<Int32>(iplocdb->databaseday) );
-    info->Set( NanNew<String>("databasecount"), NanNew<Int32>(iplocdb->databasecount) );
-    info->Set( NanNew<String>("databaseaddr"), NanNew<Int32>(iplocdb->databaseaddr) );
-    info->Set( NanNew<String>("v6databasecount"), NanNew<Int32>(iplocdb->v6databasecount) );
-    info->Set( NanNew<String>("v6databaseaddr"), NanNew<Int32>(iplocdb->v6databaseaddr) );
+    Nan::Set(result, Nan::New<String>("filename").ToLocalChecked(),
+                   Nan::New<String>(iplocdb->filename).ToLocalChecked() );
+    Nan::Set(result, Nan::New<String>("filesize").ToLocalChecked(),
+                   Nan::New<Uint32>( (uint32_t) iplocdb->filesize) );
+    Nan::Set(result, Nan::New<String>("databasetype").ToLocalChecked(),
+                   Nan::New<Int32>(iplocdb->databasetype) );
+    Nan::Set(result, Nan::New<String>("databasetype").ToLocalChecked(),
+                   Nan::New<Int32>(iplocdb->databasetype) );
+    Nan::Set(result, Nan::New<String>("databasecolumn").ToLocalChecked(),
+                   Nan::New<Int32>(iplocdb->databasecolumn) );
+    Nan::Set(result, Nan::New<String>("databaseyear").ToLocalChecked(),
+                   Nan::New<Int32>(iplocdb->databaseyear) );
+    Nan::Set(result, Nan::New<String>("databasemonth").ToLocalChecked(),
+                   Nan::New<Int32>(iplocdb->databasemonth) );
+    Nan::Set(result, Nan::New<String>("databaseday").ToLocalChecked(),
+                   Nan::New<Int32>(iplocdb->databaseday) );
+    Nan::Set(result, Nan::New<String>("databasecount").ToLocalChecked(),
+                   Nan::New<Int32>(iplocdb->databasecount) );
+    Nan::Set(result, Nan::New<String>("databaseaddr").ToLocalChecked(),
+                   Nan::New<Int32>(iplocdb->databaseaddr) );
+    Nan::Set(result, Nan::New<String>("v6databasecount").ToLocalChecked(),
+                   Nan::New<Int32>(iplocdb->v6databasecount) );
+    Nan::Set(result, Nan::New<String>("v6databaseaddr").ToLocalChecked(),
+                   Nan::New<Int32>(iplocdb->v6databaseaddr) );
 
     if (iplocdb->mml_node != NULL) {
-      info->Set(NanNew<String>("cacheoccupants"), NanNew<Int32>(iplocdb->mml_node->count));
-      info->Set(NanNew<String>("cachesize"), NanNew<Uint32>( (uint32_t) iplocdb->mml_node->mem_size) );
-      info->Set(NanNew<String>("copybythisprocess"), NanNew<Boolean>( iplocdb->mml_node->copybythisprocess != 0 ) );
+      Nan::Set(result, Nan::New<String>("cacheoccupants").ToLocalChecked(),
+                     Nan::New<Int32>(iplocdb->mml_node->count));
+      Nan::Set(result, Nan::New<String>("cachesize").ToLocalChecked(),
+                     Nan::New<Uint32>( (uint32_t) iplocdb->mml_node->mem_size) );
+      Nan::Set(result, Nan::New<String>("copybythisprocess").ToLocalChecked(),
+                     Nan::New<Boolean>( iplocdb->mml_node->copybythisprocess != 0 ) );
       if (iplocdb->mml_node->type == MEMMAP_TYPE_SHARED) {
-        info->Set(NanNew<String>("sharedname"), NanNew<String>(iplocdb->mml_node->name));
+        Nan::Set(result, Nan::New<String>("sharedname").ToLocalChecked(),
+                       Nan::New<String>(iplocdb->mml_node->name).ToLocalChecked());
       }
     }
 
-    NanReturnValue(info);
-
+    return info.GetReturnValue().Set(result);
   }
 
-  NanReturnNull();
+  info.GetReturnValue().SetNull();
 }
 
 NAN_METHOD(Location::Query)
 {
-  NanScope();
 
-  if ( args.Length() < 1 ) {
-    return NanThrowError("IP address is required");
+  if ( info.Length() < 1 ) {
+    return Nan::ThrowError("IP address is required");
   }
 
-  Location *location = ObjectWrap::Unwrap<Location>( args.This() );
+  Location *location = Nan::ObjectWrap::Unwrap<Location>( info.This() );
 
   if ( ! location->iplocdb ) {
-    return NanThrowError("IP2LOCATION database is closed");
+    return Nan::ThrowError("IP2LOCATION database is closed");
   }
 
   uint32_t mode = location->iplocdb->mode_mask;
 
-  if ( args.Length() > 1 ) {
-    mode &= args[1]->Uint32Value();
+  if ( info.Length() > 1 ) {
+    mode &= info[1]->Uint32Value();
   }
 
   uint32_t dboffset;
 
-  if ( Buffer::HasInstance(args[0]) ) {
-    Local<Object> ipbuff = args[0].As<Object>();
+  if ( Buffer::HasInstance(info[0]) ) {
+    Local<Object> ipbuff = info[0].As<Object>();
     dboffset = IP2LocationFindRow2( location->iplocdb,
                         (void *)Buffer::Data(ipbuff), (uint32_t)Buffer::Length(ipbuff) );
   } else {
-    dboffset = IP2LocationFindRow( location->iplocdb, *NanUtf8String(args[0]) );
+    dboffset = IP2LocationFindRow( location->iplocdb, *Nan::Utf8String(info[0]) );
   }
 
   if ( dboffset != IP2L_NOT_FOUND ) {
-    Local<Object> result = NanNew<Object>();
+    Local<Object> result = Nan::New<Object>();
 
     for ( uint8_t index = 0; mode != 0; ++index ) {
       const unsigned char *data;
@@ -316,65 +325,65 @@ NAN_METHOD(Location::Query)
                                     dboffset,
                                     (const void **)&data ) ) {
           case IP2L_DATA_STRING:
-            value = NanNew<String>( (const char *)data + 1, data[0] );
+            value = Nan::New<String>( (const char *)data + 1, data[0] ).ToLocalChecked();
             break;
           case IP2L_DATA_FLOAT:
-            value = NanNew<Number>( (const double)(*(const float *)data) );
+            value = Nan::New<Number>( (const double)(*(const float *)data) );
             break;
           default:
             ;
         }
         if ( ! value.IsEmpty() )
-          result->Set( NanNew<String>(LOCATION_RESULT_KEYS[index]), value );
+          Nan::Set(result, Nan::New<String>(LOCATION_RESULT_KEYS[index]).ToLocalChecked(),
+                           value );
       }
 
       mode >>= 1;
     }
 
-    NanReturnValue(result);
+    return info.GetReturnValue().Set(result);
   }
 
-  NanReturnNull();
+  info.GetReturnValue().SetNull();
 }
 
-void Location::SetResultErrorStatus(Handle<Object> &result,
+void Location::SetResultErrorStatus(Local<Object> &result,
                                          const char * const status, bool setIP)
 {
-  NanScope();
 
-  Local<String> value( NanNew<String>("?") );
+  Local<String> value( Nan::New<String>("?").ToLocalChecked() );
 
   if (setIP) {
-    result->Set( NanNew<String>("ip"), value );
-    result->Set( NanNew<String>("ip_no"), value );
+    Nan::Set(result, Nan::New<String>("ip").ToLocalChecked(), value );
+    Nan::Set(result, Nan::New<String>("ip_no").ToLocalChecked(), value );
   }
 
   for (uint8_t index = 0; index <= IP2L_INDEX_MAX; ++index ) {
-    result->Set( NanNew<String>(LOCATION_RESULT_KEYS[index]), value );
+    Nan::Set(result, Nan::New<String>(LOCATION_RESULT_KEYS[index]).ToLocalChecked(), value );
   }
 
-  result->Set( NanNew<String>("status"), NanNew<String>(status) );
+  Nan::Set(result, Nan::New<String>("status").ToLocalChecked(),
+                   Nan::New<String>(status).ToLocalChecked() );
 }
 
 NAN_METHOD(Location::GetAll)
 {
-  NanScope();
 
-  Local<Object> result = NanNew<Object>();
+  Local<Object> result = Nan::New<Object>();
 
-  Location *location = ObjectWrap::Unwrap<Location>( args.This() );
+  Location *location = Nan::ObjectWrap::Unwrap<Location>( info.This() );
 
   if ( ! location->iplocdb ) {
     SetResultErrorStatus(result, "MISSING_FILE");
-    NanReturnValue(result);
+    return info.GetReturnValue().Set(result);
   }
 
   Local<Value> ip;
 
-  if ( args.Length() < 1 ) {
-    ip = NanUndefined();
+  if ( info.Length() < 1 ) {
+    ip = Nan::Undefined();
   } else {
-    ip = args[0];
+    ip = info[0];
   }
 
   ipv6le128_t ipaddr;
@@ -385,7 +394,7 @@ NAN_METHOD(Location::GetAll)
     iptype = IP2LocationIPBin2No(
                (void *)Buffer::Data(ipbuff), (uint32_t)Buffer::Length(ipbuff), &ipaddr );
   } else {
-    iptype = IP2LocationIP2No( *NanUtf8String(ip), &ipaddr );
+    iptype = IP2LocationIP2No( *Nan::Utf8String(ip), &ipaddr );
   }
 
   uint32_t dboffset;
@@ -395,12 +404,13 @@ NAN_METHOD(Location::GetAll)
       if ( IP2LocationDBhasIPV6(location->iplocdb) ) {
         char ipnostr[IP2L_ULONG128_DECIMAL_SIZE];
         int ipnolen = IP2LocationULong128ToDecimal(ipaddr.ui32, ipnostr);
-        result->Set( NanNew<String>("ip"), ip );
-        result->Set( NanNew<String>("ip_no"), NanNew(ipnostr, ipnolen) );
+        Nan::Set(result, Nan::New<String>("ip").ToLocalChecked(), ip );
+        Nan::Set(result, Nan::New<String>("ip_no").ToLocalChecked(),
+                         Nan::New<String>((const char *)ipnostr, ipnolen).ToLocalChecked() );
         dboffset = IP2LocationFindRowIPV6(location->iplocdb, &ipaddr);
       } else {
         SetResultErrorStatus(result, "IPV6_NOT_SUPPORTED");
-        NanReturnValue(result);
+        return info.GetReturnValue().Set(result);
       }
 
       break;
@@ -409,15 +419,17 @@ NAN_METHOD(Location::GetAll)
       {
         char ipstr[16];
         int iplen = IP2LocationIPv4Str(&ipaddr, ipstr);
-        result->Set( NanNew<String>("ip"), NanNew(ipstr, iplen) );
-        result->Set( NanNew<String>("ip_no"), NanNew<Uint32>(ipaddr.ipv4.addr) );
+        Nan::Set(result, Nan::New<String>("ip").ToLocalChecked(),
+                         Nan::New<String>((const char *)ipstr, iplen).ToLocalChecked() );
+        Nan::Set(result, Nan::New<String>("ip_no").ToLocalChecked(),
+                         Nan::New<Uint32>(ipaddr.ipv4.addr) );
         dboffset = IP2LocationFindRowIPV4(location->iplocdb, ipaddr.ipv4.addr);
       }
       break;
 
     default:
       SetResultErrorStatus(result, "INVALID_IP_ADDRESS");
-      NanReturnValue(result);
+      return info.GetReturnValue().Set(result);
   }
 
   if ( dboffset == IP2L_NOT_FOUND ) {
@@ -428,7 +440,7 @@ NAN_METHOD(Location::GetAll)
 
     uint32_t mode = location->iplocdb->mode_mask;
 
-    Local<String> nosupport( NanNew<String>(LOCATION_MSG_NOT_SUPPORTED) );
+    Local<String> nosupport( Nan::New<String>(LOCATION_MSG_NOT_SUPPORTED).ToLocalChecked() );
 
     for ( uint8_t index = 0; index <= IP2L_INDEX_MAX; ++index ) {
       const unsigned char *data;
@@ -440,10 +452,10 @@ NAN_METHOD(Location::GetAll)
                                     dboffset,
                                     (const void **)&data ) ) {
           case IP2L_DATA_STRING:
-            value = NanNew<String>( (const char *)data + 1, data[0] );
+            value = Nan::New<String>( (const char *)data + 1, data[0] ).ToLocalChecked();
             break;
           case IP2L_DATA_FLOAT:
-            value = NanNew<Number>( (const double)(*(const float *)data) );
+            value = Nan::New<Number>( (const double)(*(const float *)data) );
             break;
           default:
             ;
@@ -453,7 +465,7 @@ NAN_METHOD(Location::GetAll)
           case IP2L_LATITUDE_INDEX:
           case IP2L_LONGITUDE_INDEX:
           case IP2L_ELEVATION_INDEX:
-            value = NanNew<Number>(0.0);
+            value = Nan::New<Number>(0.0);
             break;
           default:
             ;
@@ -461,26 +473,21 @@ NAN_METHOD(Location::GetAll)
       }
 
       if ( value.IsEmpty() ) {
-        result->Set( NanNew<String>(LOCATION_RESULT_KEYS[index]), nosupport );
+        Nan::Set(result, Nan::New<String>(LOCATION_RESULT_KEYS[index]).ToLocalChecked(), nosupport );
       } else {
-        result->Set( NanNew<String>(LOCATION_RESULT_KEYS[index]), value );
+        Nan::Set(result, Nan::New<String>(LOCATION_RESULT_KEYS[index]).ToLocalChecked(), value );
       }
 
       mode >>= 1;
     }
 
-    result->Set( NanNew<String>("status"), NanNew<String>("OK") );
+    Nan::Set(result, Nan::New<String>("status").ToLocalChecked(),
+                     Nan::New<String>("OK").ToLocalChecked() );
   }
 
-  NanReturnValue(result);
+  info.GetReturnValue().Set(result);
 }
 
-Persistent<FunctionTemplate> Location::constructor;
+Nan::Persistent<Function> Location::constructor;
 
-extern "C" {
-  static void init(Handle<Object> exports)
-  {
-    Location::Init(exports);
-  }
-  NODE_MODULE(nodeip2location, init)
-}
+NODE_MODULE(nodeip2location, Location::Init)

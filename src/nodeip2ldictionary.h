@@ -49,17 +49,17 @@ class IP2LDictionary {
   public:
     IP2LDictionary(void);
     virtual ~IP2LDictionary(void);
-    NAN_INLINE virtual const Map<IP2LDictionaryElement>::type &Children(void)
+    NAN_INLINE virtual const ::Map<IP2LDictionaryElement>::type &Children(void)
                                                                          const;
     IP2LDictionaryCountry *FindOrAddDictionaryCountry(const char *name);
 
     template <class DictElement>
     NAN_INLINE static DictElement *FindOrAddDictionaryElementMap(
                                         const char *name,
-                                        Map<IP2LDictionaryElement>::type &map);
+                                        ::Map<IP2LDictionaryElement>::type &map);
 
   protected:
-    Map<IP2LDictionaryElement>::type children;
+    ::Map<IP2LDictionaryElement>::type children;
 
   private:
 
@@ -86,7 +86,7 @@ class IP2LDictionaryCountry : public IP2LDictionaryElement {
     void AddUniqueDictionaryElement(char *name, IP2L_DICT_TYPE type);
     IP2LDictionaryBranch *FindOrAddDictionaryBranch(char *name,
                                                           IP2L_DICT_TYPE type);
-    NAN_INLINE const Map<IP2LDictionaryElement>::type &Children(
+    NAN_INLINE const ::Map<IP2LDictionaryElement>::type &Children(
                                                     IP2L_DICT_TYPE type) const;
     NAN_INLINE const char* SecondName(void) const;
     NAN_INLINE bool NoSecondName(void) const;
@@ -94,7 +94,7 @@ class IP2LDictionaryCountry : public IP2LDictionaryElement {
 
   private:
     char* second_name;
-    Map<IP2LDictionaryElement>::type children[IP2L_DICT_TYPE_MAX + 1];
+    ::Map<IP2LDictionaryElement>::type children[IP2L_DICT_TYPE_MAX + 1];
 
     IP2LDictionaryCountry(const IP2LDictionaryCountry&);
     void operator=(const IP2LDictionaryCountry&);

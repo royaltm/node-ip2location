@@ -27,13 +27,13 @@ using namespace v8;
 
 #define LOCATION_ALL ( (uint32_t)(IP2L_MASK(IP2L_INDEX_MAX + 1) - 1) )
 
-class Location: public ObjectWrap {
+class Location: public Nan::ObjectWrap {
   public:
     IP2Location *iplocdb;
     const char *dbmode;
-    static Persistent<FunctionTemplate> constructor;
+    static Nan::Persistent<Function> constructor;
 
-    static void Init(Handle<Object> exports);
+    static NAN_MODULE_INIT(Init);
     Location( char *locdbpath, IP2LOCATION_ACCESS_TYPE mtype, char *shared = NULL );
     ~Location();
     void Close();
@@ -49,7 +49,7 @@ class Location: public ObjectWrap {
     static NAN_METHOD(GetAll);
 
   private:
-    static void SetResultErrorStatus( Handle<Object> &result,
+    static void SetResultErrorStatus( Local<Object> &result,
                                       const char * const status,
                                       bool setIP = true );
     static void BuildDictionary( IP2LDictionary &dict,
@@ -71,19 +71,19 @@ class Location: public ObjectWrap {
     static Local<Object> CreateDictionaryResult( const IP2LDictionary &dict,
                                                  const uint32_t mask );
     static Local<Array> CreateArrayResult(
-                            const Map<IP2LDictionaryElement>::type &dict_map);
+                            const ::Map<IP2LDictionaryElement>::type &dict_map);
     NAN_INLINE static void CreateDictionaryResultBranch(
                             const uint32_t mask,
                             const uint32_t branch_mask,
                             const uint32_t leaf_mask,
-                            const Map<IP2LDictionaryElement>::type &branch_map,
+                            const ::Map<IP2LDictionaryElement>::type &branch_map,
                             const Handle<String> &indexLabel,
                             const Handle<String> &label,
                             Handle<Object> &result);
     NAN_INLINE static void CreateDictionaryResultElement(
                               const uint32_t mask,
                               const uint32_t leaf_mask,
-                              const Map<IP2LDictionaryElement>::type &leaf_map,
+                              const ::Map<IP2LDictionaryElement>::type &leaf_map,
                               const Handle<String> &label,
                               Handle<Object> &result);
 };
