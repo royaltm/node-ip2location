@@ -164,12 +164,12 @@ Notes
 -----
 
 This module was tested on Linux (x64), OS X, FreeBSD and MS Windows (x64 and x86) with
-node 0.10, 0.11, 0.12 and io.js.
+node v0.10, v0.11, v0.12, iojs-3 and v4.
 
 Licence
 -------
 
-LGPL
+LGPL-3.0
 
 [Build Status]: https://travis-ci.org/advertine/node-ip2location
 [BS img]: https://travis-ci.org/advertine/node-ip2location.svg
