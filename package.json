@@ -7,7 +7,7 @@
     "ip2location"
   ],
   "version": "1.0.6",
-  "license": "LGPL",
+  "license": "LGPL-3.0",
   "author": "Rafał Michalski <royal@advertine.com>",
   "contributors": [],
   "homepage": "https://github.com/advertine/node-ip2location",
