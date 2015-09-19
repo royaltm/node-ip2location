@@ -2,8 +2,14 @@
 var ben = require('ben')
 , Location = require('..')
 , assert = require('assert')
-, ip2loc = require('ip2location-nodejs')
 , dropin = require('../dropin')
+
+try {
+  var ip2loc = require('ip2location-nodejs')
+} catch(e) {
+  console.log("missing: ip2location-nodejs");
+}
+
    
 if (process.argv.length < 3) {
   console.log('usage: node ' + 
@@ -159,10 +165,12 @@ dropin.IP2Location_init();
 
 console.log();
 
-ip2loc.IP2Location_init(file)
-console.log('-------------------');
-console.log("ip2location-nodejs:");
-console.log("\nIP2Location_get_all()");
-test(ip2loc.IP2Location_get_all, true);
-console.log("\nIP2Location_get_country_short()");
-test(ip2loc.IP2Location_get_country_short.bind(ip2loc), true);
+if (ip2loc) {
+  ip2loc.IP2Location_init(file)
+  console.log('-------------------');
+  console.log("ip2location-nodejs:");
+  console.log("\nIP2Location_get_all()");
+  test(ip2loc.IP2Location_get_all, true);
+  console.log("\nIP2Location_get_country_short()");
+  test(ip2loc.IP2Location_get_country_short.bind(ip2loc), true);
+}
