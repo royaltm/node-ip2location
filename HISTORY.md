@@ -1,3 +1,7 @@
+v1.1.0
+
+* bump nan to 2.0.9, fixes build with iojs-3 and node v4
+
 v1.0.6
 
 * deps: bump nan to 1.8, fixes build problem with newest io.js
