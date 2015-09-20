@@ -1,3 +1,8 @@
+v1.1.1
+
+* use nan converters instead of soon deprecated ->XValue()
+* use selected v8:: and Nan:: symbols instead of namespaces
+
 v1.1.0
 
 * bump nan to 2.0.9, fixes build with iojs-3 and node v4
