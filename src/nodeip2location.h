@@ -12,8 +12,14 @@ extern "C" {
 
 #include "nodeip2ldictionary.h"
 
-using namespace node;
-using namespace v8;
+using v8::Handle;
+using v8::Local;
+using v8::Object;
+using v8::Array;
+using v8::String;
+using v8::Function;
+using Nan::Persistent;
+using Nan::ObjectWrap;
 
 #define LOCATION_DBMODE_FILE   "file"
 #define LOCATION_DBMODE_MMAP   "mmap"
@@ -27,11 +33,11 @@ using namespace v8;
 
 #define LOCATION_ALL ( (uint32_t)(IP2L_MASK(IP2L_INDEX_MAX + 1) - 1) )
 
-class Location: public Nan::ObjectWrap {
+class Location: public ObjectWrap {
   public:
     IP2Location *iplocdb;
     const char *dbmode;
-    static Nan::Persistent<Function> constructor;
+    static Persistent<Function> constructor;
 
     static NAN_MODULE_INIT(Init);
     Location( char *locdbpath, IP2LOCATION_ACCESS_TYPE mtype, char *shared = NULL );

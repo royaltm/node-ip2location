@@ -1,9 +1,17 @@
 #include "nodeip2location.h"
 
-using namespace node;
-using namespace v8;
-
 #include "nodeip2ldictbuilder_impl.h"
+
+using v8::Value;
+using v8::Boolean;
+using v8::Number;
+using v8::Int32;
+using v8::Uint32;
+using v8::FunctionTemplate;
+using v8::ObjectTemplate;
+using v8::PropertyAttribute;
+using v8::ReadOnly;
+using v8::DontDelete;
 
 static const char * const LOCATION_RESULT_KEYS[IP2L_INDEX_MAX + 1] = {
   "country_short",
@@ -83,7 +91,7 @@ NAN_MODULE_INIT(Location::Init)
   Nan::SetPrototypeMethod(tpl, "getAll", GetAll);
 
   constructor.Reset( Nan::GetFunction(tpl).ToLocalChecked() );
-  Nan::Set(target, Nan::New<v8::String>("Location").ToLocalChecked(),
+  Nan::Set(target, Nan::New<String>("Location").ToLocalChecked(),
                    Nan::GetFunction(tpl).ToLocalChecked());
 }
 
@@ -167,25 +175,25 @@ NAN_METHOD(Location::New)
 
 NAN_GETTER(Location::GetDbMode)
 {
-  Location *location = Nan::ObjectWrap::Unwrap<Location>( info.This() );
+  Location *location = ObjectWrap::Unwrap<Location>( info.This() );
   info.GetReturnValue().Set( Nan::New<String>(location->dbmode).ToLocalChecked() );
 }
 
 NAN_GETTER(Location::GetIsOpen)
 {
-  Location *location = Nan::ObjectWrap::Unwrap<Location>( info.This() );
+  Location *location = ObjectWrap::Unwrap<Location>( info.This() );
   info.GetReturnValue().Set( location->iplocdb != NULL );
 }
 
 NAN_GETTER(Location::HasIpv6)
 {
-  Location *location = Nan::ObjectWrap::Unwrap<Location>( info.This() );
+  Location *location = ObjectWrap::Unwrap<Location>( info.This() );
   info.GetReturnValue().Set( IP2LocationDBhasIPV6(location->iplocdb) != 0 );
 }
 
 NAN_METHOD(Location::CloseDatabase)
 {
-  Location* location = Nan::ObjectWrap::Unwrap<Location>(info.This());
+  Location* location = ObjectWrap::Unwrap<Location>(info.This());
   location->Close();
   info.GetReturnValue().SetUndefined();
 }
@@ -193,7 +201,7 @@ NAN_METHOD(Location::CloseDatabase)
 NAN_METHOD(Location::DeleteShared)
 {
 
-  Location* location = Nan::ObjectWrap::Unwrap<Location>(info.This());
+  Location* location = ObjectWrap::Unwrap<Location>(info.This());
 
   switch(IP2LocationDeleteShared(location->iplocdb)) {
   case 0:
@@ -208,7 +216,7 @@ NAN_METHOD(Location::DeleteShared)
 NAN_METHOD(Location::CreateDictionary)
 {
 
-  Location* location = Nan::ObjectWrap::Unwrap<Location>(info.This());
+  Location* location = ObjectWrap::Unwrap<Location>(info.This());
   if ( ! location->iplocdb ) {
     return Nan::ThrowError("IP2LOCATION database is closed");
   }
@@ -234,7 +242,7 @@ NAN_METHOD(Location::CreateDictionary)
 NAN_METHOD(Location::GetDbInfo)
 {
 
-  Location* location = Nan::ObjectWrap::Unwrap<Location>( info.This() );
+  Location* location = ObjectWrap::Unwrap<Location>( info.This() );
 
   IP2Location *iplocdb = location->iplocdb;
   Local<Object> result = Nan::New<Object>();
@@ -291,7 +299,7 @@ NAN_METHOD(Location::Query)
     return Nan::ThrowError("IP address is required");
   }
 
-  Location *location = Nan::ObjectWrap::Unwrap<Location>( info.This() );
+  Location *location = ObjectWrap::Unwrap<Location>( info.This() );
 
   if ( ! location->iplocdb ) {
     return Nan::ThrowError("IP2LOCATION database is closed");
@@ -305,10 +313,10 @@ NAN_METHOD(Location::Query)
 
   uint32_t dboffset;
 
-  if ( Buffer::HasInstance(info[0]) ) {
+  if ( node::Buffer::HasInstance(info[0]) ) {
     Local<Object> ipbuff = info[0].As<Object>();
     dboffset = IP2LocationFindRow2( location->iplocdb,
-                        (void *)Buffer::Data(ipbuff), (uint32_t)Buffer::Length(ipbuff) );
+                        (void *)node::Buffer::Data(ipbuff), (uint32_t)node::Buffer::Length(ipbuff) );
   } else {
     dboffset = IP2LocationFindRow( location->iplocdb, *Nan::Utf8String(info[0]) );
   }
@@ -371,7 +379,7 @@ NAN_METHOD(Location::GetAll)
 
   Local<Object> result = Nan::New<Object>();
 
-  Location *location = Nan::ObjectWrap::Unwrap<Location>( info.This() );
+  Location *location = ObjectWrap::Unwrap<Location>( info.This() );
 
   if ( ! location->iplocdb ) {
     SetResultErrorStatus(result, "MISSING_FILE");
@@ -389,10 +397,10 @@ NAN_METHOD(Location::GetAll)
   ipv6le128_t ipaddr;
   int iptype;
 
-  if ( Buffer::HasInstance(ip) ) {
+  if ( node::Buffer::HasInstance(ip) ) {
     Local<Object> ipbuff = ip.As<Object>();
     iptype = IP2LocationIPBin2No(
-               (void *)Buffer::Data(ipbuff), (uint32_t)Buffer::Length(ipbuff), &ipaddr );
+               (void *)node::Buffer::Data(ipbuff), (uint32_t)node::Buffer::Length(ipbuff), &ipaddr );
   } else {
     iptype = IP2LocationIP2No( *Nan::Utf8String(ip), &ipaddr );
   }
@@ -488,6 +496,6 @@ NAN_METHOD(Location::GetAll)
   info.GetReturnValue().Set(result);
 }
 
-Nan::Persistent<Function> Location::constructor;
+Persistent<Function> Location::constructor;
 
 NODE_MODULE(nodeip2location, Location::Init)
