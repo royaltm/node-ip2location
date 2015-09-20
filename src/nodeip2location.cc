@@ -219,7 +219,7 @@ NAN_METHOD(Location::CreateDictionary)
   uint32_t mode = LOCATION_ALL;
 
   if ( info.Length() > 0 ) {
-    mode = info[0]->Uint32Value();
+    mode = Nan::To<uint32_t>(info[0]).FromMaybe(mode);
   }
 
   IP2LDictionary dict;
@@ -300,7 +300,7 @@ NAN_METHOD(Location::Query)
   uint32_t mode = location->iplocdb->mode_mask;
 
   if ( info.Length() > 1 ) {
-    mode &= info[1]->Uint32Value();
+    mode &= Nan::To<uint32_t>(info[1]).FromMaybe(0xFFFFFFFF);
   }
 
   uint32_t dboffset;
