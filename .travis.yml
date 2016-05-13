@@ -15,6 +15,8 @@ env:
   - TRAVIS_NODE_VERSION="0.12"
   - TRAVIS_NODE_VERSION="iojs-3"
   - TRAVIS_NODE_VERSION="4"
+  - TRAVIS_NODE_VERSION="5"
+  - TRAVIS_NODE_VERSION="6"
 before_install:
   - wget http://www.ip2location.com/downloads/sample.bin.db24.zip
   - unzip sample.bin.db24.zip '*.BIN'
