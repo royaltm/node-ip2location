@@ -164,7 +164,7 @@ Notes
 -----
 
 This module was tested on Linux (x64), OS X, FreeBSD and MS Windows (x64 and x86) with
-node v0.10, v0.11, v0.12, iojs-3 and v4.
+node v0.10, v0.11, v0.12, iojs-3, v4, v5 and v6.
 
 Licence
 -------

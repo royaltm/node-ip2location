@@ -1,3 +1,7 @@
+v1.1.2
+
+* bump nan to 2.3.3, fixes build with node v5 and v6
+
 v1.1.1
 
 * use nan converters instead of soon deprecated ->XValue()
