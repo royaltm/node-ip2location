@@ -20,7 +20,7 @@ var googleResult = {
     longitude: -122.0785140991211,
     domain: 'google.com',
     zipcode: '94043',
-    timezone: '-08:00',
+    timezone: '-07:00',
     netspeed: 'T1',
     iddcode: '1',
     areacode: '650',
