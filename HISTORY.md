@@ -1,3 +1,8 @@
+v1.1.3
+
+* bump nan to 2.4.0
+* fix empty fields for some ip in memory modes
+
 v1.1.2
 
 * bump nan to 2.3.3, fixes build with node v5 and v6
