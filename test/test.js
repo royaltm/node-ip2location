@@ -2,6 +2,8 @@ var test = require("tap").test
   , Location = require('..')
   , fs = require('fs')
   , path = require('path')
+  // , IP4DBNAME = "IP-COUNTRY-REGION-CITY-LATITUDE-LONGITUDE-ZIPCODE-TIMEZONE-ISP-DOMAIN-NETSPEED-AREACODE-WEATHER-MOBILE-ELEVATION-USAGETYPE.BIN"
+  // , IP6DBNAME = "IPV6-COUNTRY-REGION-CITY-LATITUDE-LONGITUDE-ZIPCODE-TIMEZONE-ISP-DOMAIN-NETSPEED-AREACODE-WEATHER-MOBILE-ELEVATION-USAGETYPE.BIN"
   , IP4DBNAME = path.join(__dirname, '..',
                   fs.readdirSync(path.join(__dirname, '..')).
                     filter(function(n) { return (/^IP-.*\.BIN$/).test(n); })[0])
@@ -9,8 +11,29 @@ var test = require("tap").test
                   fs.readdirSync(path.join(__dirname, '..')).
                   filter(function(n) { return (/^IPV6-.*\.BIN$/).test(n); })[0])
   ;
-
-var googleResult = {
+var googleResultV6 = {
+    country_short: 'US',
+    country_long: 'United States',
+    region: 'California',
+    city: 'Mountain View',
+    isp: 'Google Inc.',
+    latitude: 37.386051177978516,
+    longitude: -122.08384704589844,
+    domain: 'google.com',
+    zipcode: '94043',
+    timezone: '-07:00',
+    netspeed: 'T1',
+    iddcode: '1',
+    areacode: '650',
+    weatherstationcode: 'USCA0746',
+    weatherstationname: 'Mountain View',
+    mcc: '-',
+    mnc: '-',
+    mobilebrand: '-',
+    elevation: '31',
+    usagetype: 'SES'
+  },
+  googleResult = {
     country_short: 'US',
     country_long: 'United States',
     region: 'California',
@@ -216,30 +239,39 @@ var maskNames = [
   'USAGETYPE'];
 
 test("should query only selected attributes", function(t) {
-  var location = new Location(IP4DBNAME);
+  var tests = [
+    {ip: '8.8.8.8', db: IP4DBNAME, result: googleResult},
+    // {ip: '2001:4860:4860::8888', db: IP6DBNAME, result: googleResultV6}
+  ];
 
-  t.plan(1 + maskNames.length * 2 + 1);
+  t.plan(tests.length * (1 + maskNames.length * 2 + 1));
+  tests.forEach(function(row) {
+    var ip = row.ip, db = row.db;
+    var googleResult = row.result;
 
-  t.deepEqual(location.query('8.8.8.8', 0), {});
+    var location = new Location(db);
 
-  maskNames.forEach(function(name) {
-    var attrName = name.toLowerCase(),
-        result = {};
-    result[attrName] = googleResult[attrName];
-    t.deepEqual(location.query('8.8.8.8', Location[name]), result);
+    t.deepEqual(location.query(ip, 0), {});
+
+    maskNames.forEach(function(name) {
+      var attrName = name.toLowerCase(),
+          result = {};
+      result[attrName] = googleResult[attrName];
+      t.deepEqual(location.query(ip, Location[name]), result);
+    });
+
+    var mask = 0, result = {};
+    maskNames.forEach(function(name) {
+      var attrName = name.toLowerCase();
+      mask |= Location[name];
+      result[attrName] = googleResult[attrName];
+      t.deepEqual(location.query(ip, mask), result);
+    });
+
+    t.strictEqual(mask, Location.ALL);
+
+    location.close();
   });
-
-  var mask = 0, result = {};
-  maskNames.forEach(function(name) {
-    var attrName = name.toLowerCase();
-    mask |= Location[name];
-    result[attrName] = googleResult[attrName];
-    t.deepEqual(location.query('8.8.8.8', mask), result);
-  });
-
-  t.strictEqual(mask, Location.ALL);
-
-  location.close();
 });
 
 test("should query IPv6 addresses", function(t) {
@@ -311,6 +343,44 @@ test("should query extreme IP addresses", function(t) {
   t.end();
 
   location.close();
+});
+
+test("no result property should be an empty string", function(t) {
+  var location = new Location(IP4DBNAME);
+  var res, name;
+
+  t.ok(res = location.query('8.8.8.8'));
+  t.type(res, Object);
+  for(name in res) t.notStrictEqual(res[name], "");
+
+  location.close();
+
+  location = new Location(IP6DBNAME);
+
+  t.ok(res = location.query('2001:4860:4860::8888'));
+  t.type(res, Object);
+  for(name in res) t.notStrictEqual(res[name], "");
+
+  location.close();
+
+  var location = new Location(IP4DBNAME, 'cache');
+  var res, name;
+
+  t.ok(res = location.query('8.8.8.8'));
+  t.type(res, Object);
+  for(name in res) t.notStrictEqual(res[name], "");
+
+  location.close();
+
+  location = new Location(IP6DBNAME, 'cache');
+
+  t.ok(res = location.query('2001:4860:4860::8888'));
+  t.type(res, Object);
+  for(name in res) t.notStrictEqual(res[name], "");
+
+  location.close();
+
+  t.end();
 });
 
 test("should not open different databases into named shared memory", function(t) {

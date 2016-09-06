@@ -542,7 +542,7 @@ const uint8_t *IP2LocationReadStr(FILE *handle, IP2LCacheHandler *cache, uint32_
   } else {
     uint8_t *p = cache->memory;
     if (position >= cache->size ||
-        position + p[0] >= cache->size) {
+        position + p[position] >= cache->size) {
       return IP2LreadErrorStr;
     }
     return &p[position];
