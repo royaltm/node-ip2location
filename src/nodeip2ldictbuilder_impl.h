@@ -274,9 +274,9 @@ NAN_INLINE void Location::CreateDictionaryResultBranch(
                             const uint32_t branch_mask,
                             const uint32_t leaf_mask,
                             const ::Map<IP2LDictionaryElement>::type &branch_map,
-                            const Handle<String> &indexLabel,
-                            const Handle<String> &label,
-                            Handle<Object> &result)
+                            const Local<String> &indexLabel,
+                            const Local<String> &label,
+                            Local<Object> &result)
 {
   if ( (mask & branch_mask) != 0 ) {
     Local<Array> branch_array = CreateArrayResult(branch_map);
@@ -303,8 +303,8 @@ NAN_INLINE void Location::CreateDictionaryResultElement(
                             const uint32_t mask,
                             const uint32_t leaf_mask,
                             const ::Map<IP2LDictionaryElement>::type &leaf_map,
-                            const Handle<String> &label,
-                            Handle<Object> &result)
+                            const Local<String> &label,
+                            Local<Object> &result)
 {
   if ( (mask & leaf_mask) != 0 ) {
     Nan::Set(result, label, CreateArrayResult(leaf_map) );

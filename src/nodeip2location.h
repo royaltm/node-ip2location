@@ -12,7 +12,6 @@ extern "C" {
 
 #include "nodeip2ldictionary.h"
 
-using v8::Handle;
 using v8::Local;
 using v8::Object;
 using v8::Array;
@@ -83,15 +82,15 @@ class Location: public ObjectWrap {
                             const uint32_t branch_mask,
                             const uint32_t leaf_mask,
                             const ::Map<IP2LDictionaryElement>::type &branch_map,
-                            const Handle<String> &indexLabel,
-                            const Handle<String> &label,
-                            Handle<Object> &result);
+                            const Local<String> &indexLabel,
+                            const Local<String> &label,
+                            Local<Object> &result);
     NAN_INLINE static void CreateDictionaryResultElement(
                               const uint32_t mask,
                               const uint32_t leaf_mask,
                               const ::Map<IP2LDictionaryElement>::type &leaf_map,
-                              const Handle<String> &label,
-                              Handle<Object> &result);
+                              const Local<String> &label,
+                              Local<Object> &result);
 };
 
 #endif /* HAVE_NODEIP2LOCATION_H */
