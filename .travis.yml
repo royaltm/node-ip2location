@@ -2,7 +2,6 @@ sudo: false
 language: node_js
 
 os:
-  - windows
   - osx
   - linux
 
@@ -22,10 +21,7 @@ before_install:
   # print versions
   - node --version
   - npm --version
-  - if [[ $TRAVIS_OS_NAME != "windows" ]]; then $CXX --version; fi
-  # install windows-build-tools
-  - if [[ $TRAVIS_OS_NAME == "windows" ]]; then npm install --global --production windows-build-tools; fi
-  - if [[ $TRAVIS_OS_NAME == "windows" ]]; then setx PYTHON "%USERPROFILE%\.windows-build-tools\python27\python.exe"; fi
+  - $CXX --version
   # download and extract sample databases
   - wget http://www.ip2location.com/downloads/sample.bin.db24.zip
   - unzip sample.bin.db24.zip '*.BIN'
