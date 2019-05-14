@@ -10,31 +10,12 @@ var test = require("tap").test
                   filter(function(n) { return (/^IPV6-.*\.BIN$/).test(n); })[0])
   ;
 
-var googleResult = {
+var googleResult = Object.assign(
+  {
     ip: '8.8.8.8',
     ip_no: 134744072,
-    country_short: 'US',
-    country_long: 'United States',
-    region: 'California',
-    city: 'Mountain View',
-    isp: 'Google Inc.',
-    latitude: 37.40599060058594,
-    longitude: -122.0785140991211,
-    domain: 'google.com',
-    zipcode: '94043',
-    timezone: '-07:00',
-    netspeed: 'T1',
-    iddcode: '1',
-    areacode: '650',
-    weatherstationcode: 'USCA0746',
-    weatherstationname: 'Mountain View',
-    mcc: '-',
-    mnc: '-',
-    mobilebrand: '-',
-    elevation: '31',
-    usagetype: 'SES',
     status: 'OK'
-  };
+  }, require('./expected-sample')['8.8.8.8']);
 
 test("should have utility functions", function(t) {
   t.type(dropin.IP2Location_get_country_short     , 'function');

@@ -11,50 +11,9 @@ var test = require("tap").test
                   fs.readdirSync(path.join(__dirname, '..')).
                   filter(function(n) { return (/^IPV6-.*\.BIN$/).test(n); })[0])
   ;
-var googleResultV6 = {
-    country_short: 'US',
-    country_long: 'United States',
-    region: 'California',
-    city: 'Mountain View',
-    isp: 'Google Inc.',
-    latitude: 37.386051177978516,
-    longitude: -122.08384704589844,
-    domain: 'google.com',
-    zipcode: '94043',
-    timezone: '-07:00',
-    netspeed: 'T1',
-    iddcode: '1',
-    areacode: '650',
-    weatherstationcode: 'USCA0746',
-    weatherstationname: 'Mountain View',
-    mcc: '-',
-    mnc: '-',
-    mobilebrand: '-',
-    elevation: '31',
-    usagetype: 'SES'
-  },
-  googleResult = {
-    country_short: 'US',
-    country_long: 'United States',
-    region: 'California',
-    city: 'Mountain View',
-    isp: 'Google Inc.',
-    latitude: 37.40599060058594,
-    longitude: -122.0785140991211,
-    domain: 'google.com',
-    zipcode: '94043',
-    timezone: '-07:00',
-    netspeed: 'T1',
-    iddcode: '1',
-    areacode: '650',
-    weatherstationcode: 'USCA0746',
-    weatherstationname: 'Mountain View',
-    mcc: '-',
-    mnc: '-',
-    mobilebrand: '-',
-    elevation: '31',
-    usagetype: 'SES'
-  };
+
+var googleResult = Object.assign(
+  {}, require('./expected-sample')['8.8.8.8']);
 
 test("should be a function", function(t) {
   t.type(Location, 'function');
@@ -241,7 +200,7 @@ var maskNames = [
 test("should query only selected attributes", function(t) {
   var tests = [
     {ip: '8.8.8.8', db: IP4DBNAME, result: googleResult},
-    // {ip: '2001:4860:4860::8888', db: IP6DBNAME, result: googleResultV6}
+    // {ip: '2001:4860:4860::8888', db: IP6DBNAME, result: googleResult}
   ];
 
   t.plan(tests.length * (1 + maskNames.length * 2 + 1));
