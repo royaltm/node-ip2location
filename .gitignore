@@ -17,3 +17,7 @@ sftp-config.json
 *.bin
 *.ZIP
 *.zip
+.nyc_output
+*.tgz
+/lib
+/doc
