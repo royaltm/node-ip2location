@@ -3,7 +3,6 @@
     {
       'target_name': 'nodeip2location',
       'sources': [
-        'src/curl/inet_pton.c',
         'src/ip2location/ip2lmemorymaplist.c',
         'src/ip2location/ip2lipaddress.c',
         'src/ip2location/ip2ldatabase.c',
@@ -12,7 +11,6 @@
       ],
       'include_dirs': [
         "<!(node -e \"require('nan')\")",
-        'src/curl',
         'src/ip2location'
       ],
       'conditions': [
