@@ -5,8 +5,10 @@ This library is a complete re-write of IP2LOCATION database client.
 Built for speed.
 
 [![NPM][NPM img]][NPM Status]
-
+[![Node][Node img]][NPM Status]
 [![Build Status][BS img]][Build Status]
+[![License][License img]][License Link]
+
 
 Data structures learnt from the IP2Location C library:
 
@@ -163,18 +165,21 @@ With this module it's possible to dump database dictionaries using
 Notes
 -----
 
-This module was tested on Linux (x64), OS X, FreeBSD and MS Windows (x64 and x86) with
-node v0.10, v0.11, v0.12, iojs-3, v4, v5 and v6.
+This module was tested on Linux (x64), OS X and MS Windows (x64 and x86) with
+node v6, v7, v8, v9, v10, v11 and v12.
 
 Licence
 -------
 
 LGPL-3.0
 
+[BS img]: https://img.shields.io/travis/advertine/node-ip2location.svg?maxAge=86400&style=flat-square
 [Build Status]: https://travis-ci.org/advertine/node-ip2location
-[BS img]: https://travis-ci.org/advertine/node-ip2location.svg
-[NPM img]: https://nodei.co/npm/ip2location-native.png?compact=true
-[NPM Status]: https://nodei.co/npm/ip2location-native/
+[NPM img]: https://img.shields.io/npm/v/ip2location-native.svg?maxAge=86400&style=flat-square
+[NPM Status]: https://www.npmjs.com/package/ip2location-native
+[Node img]: https://img.shields.io/node/v/ip2location-native.svg?maxAge=2592000&style=flat-square
+[License img]: https://img.shields.io/npm/l/ip2location-native.svg?maxAge=2592000&style=flat-square
+[License Link]: https://opensource.org/licenses/LGPL-3.0
 [ip2location-nodejs]: http://www.ip2location.com/developers/nodejs
 [ip2location-nodejs-github]: https://github.com/ip2location-nodejs/IP2Location
 [ip2Location-devel-db]: http://www.ip2location.com/developers#sample_ip2location_databases_bin
