@@ -1,3 +1,12 @@
+v1.2.0
+
+* bump nan to 2.13.2
+* restrict node engine to version 6 or later
+* pin tap to major version 12
+* replace an obsolete v8::Handle type with v8::Local
+* removed curl/inet_pton implementation (Windows Vista and later provides inet_pton)
+* ci: make use of language "node_js"
+
 v1.1.3
 
 * bump nan to 2.4.0
