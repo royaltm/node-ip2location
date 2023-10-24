@@ -23,7 +23,7 @@
     "node": ">=6"
   },
   "dependencies": {
-    "nan": "^2.13.2"
+    "nan": "^2.18.0"
   },
   "devDependencies": {
     "tap": "^12.1",
